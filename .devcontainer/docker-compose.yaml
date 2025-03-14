@@ -7,8 +7,7 @@ services:
       - "..:/workspace:cached"
     environment:
       - PORT=8080
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - POSTGRES_HOST=db
     env_file:
       - .env
     command: ["sleep", "infinity"]

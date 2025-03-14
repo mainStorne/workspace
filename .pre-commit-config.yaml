@@ -7,9 +7,9 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-json
-        exclude: ^({{cookiecutter.project_name}}/\.devcontainer/devcontainer\.json|\.devcontainer/devcontainer\.json|{{cookiecutter.project_name}}/)$
+        exclude: ^({{cookiecutter.project_name}}/\.devcontainer/devcontainer\.json|\.devcontainer/devcontainer\.json|{{cookiecutter.project_name}}/|\.vscode/launch\.json)$
       - id: pretty-format-json
-        exclude: ^({{cookiecutter.project_name}}/\.devcontainer/devcontainer\.json|\.devcontainer/devcontainer\.json|{{cookiecutter.project_name}}/)$
+        exclude: ^({{cookiecutter.project_name}}/\.devcontainer/devcontainer\.json|\.devcontainer/devcontainer\.json|{{cookiecutter.project_name}}/|\.vscode/launch\.json)$
         args: [--autofix]
       - id: check-toml
         exclude: ^{{cookiecutter.project_name}}/
