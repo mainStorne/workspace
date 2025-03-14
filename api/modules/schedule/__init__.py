@@ -1,8 +1,12 @@
-from fastapi import APIRouter
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, HTTPException, status
 
 from ...db import Schedule
 from ...deps import Session
-from .schema import ScheduleCreate, ScheduleRead
+from ...utils import to_openapi
+from .manager import schedule_manager
+from .schema import ScheduleCard, ScheduleCreate, ScheduleRead
 
 r = APIRouter()
 
@@ -13,3 +17,23 @@ async def create(session: Session, schedule: ScheduleCreate):
     session.add(schedule_db)
     await session.commit()
     return ScheduleRead(schedule_id=schedule_db.id)
+
+
+ScheduleExpired = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Расписание истекло!")
+
+
+@r.get(
+    "/schedule",
+    responses={404: {"detail": "Not found"}, **to_openapi(ScheduleExpired)},
+    response_model=list[ScheduleCard],
+)
+async def schedule(session: Session, user_id: str, schedule_id: int):
+    """Возвращает данные о выбранном расписании с рассчитанным
+    графиком приёмов на день
+    """  # noqa: RUF002
+    schedule = await schedule_manager.get_or_404(session, user_id=user_id, id=schedule_id)
+    # test for expired
+    if schedule.schedule_datetime + schedule.treatment_duration < datetime.now(tz=timezone.utc):
+        raise ScheduleExpired
+
+    return schedule_manager.schedule(schedule)

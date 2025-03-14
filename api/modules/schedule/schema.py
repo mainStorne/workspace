@@ -1,4 +1,5 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
+from typing import ClassVar
 
 from crontab import CronTab
 from pydantic import field_validator
@@ -7,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 
 class ScheduleCreate(SQLModel):
+    crontab: ClassVar[CronTab]
     medicine_name: str
     intake_period: str = Field(
         description="Период приёмов записывается в cron синтаксисе, пример 0 12 * * * - каждый день в ровно 12 часов дня",
@@ -27,3 +29,8 @@ class ScheduleCreate(SQLModel):
 
 class ScheduleRead(SQLModel):
     schedule_id: int
+
+
+class ScheduleCard(SQLModel):
+    medicine_name: str
+    medicine_datetime: datetime
