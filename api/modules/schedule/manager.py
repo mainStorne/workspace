@@ -47,6 +47,8 @@ class ScheduleManager(ModelManager):
     def _generate_schedules_datetime(start: datetime, stop: datetime, schedule: Schedule):
         for scheduled_datetime in crontab_range(start=start, stop=stop, cron=CronTab(schedule.intake_period)):
             reminder = scheduled_datetime.minute % 15
+            if scheduled_datetime.hour < 8 or scheduled_datetime.hour > 22:
+                continue
             yield scheduled_datetime + timedelta(minutes=15 - reminder)
 
     async def next_takings(self, session: AsyncSession, user_id: str):

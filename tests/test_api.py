@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from api.db import Schedule
-from api.modules.schedule.schema import ScheduleCard, ScheduleCreate
+from api.modules.schedule.schema import ScheduleCard, ScheduleCreate, TakingsRead
 
 pytestmark = pytest.mark.anyio
 
@@ -81,3 +81,31 @@ async def test_constantly_medicine_datetime(schedule, client, monkeypatch, sessi
     await session.commit()
     response = await client.get("/schedule", params={"user_id": schedule.user_id, "schedule_id": schedule.id})
     assert response.status_code == 200
+
+
+async def test_next_takings(schedule, client, session, monkeypatch):
+    class MockSettings:
+        NEXT_TAKINGS_PERIOD = timedelta(days=1)
+
+    monkeypatch.setattr("api.modules.schedule.manager.settings", MockSettings)
+    response = await client.get("/next_takings", params={"user_id": schedule.user_id})
+    assert response.status_code == 200
+    response_json = response.json()
+    assert len(response_json) == 1
+    TakingsRead.model_validate(response_json[0])
+
+    schedule_2 = Schedule(
+        medicine_name="test2",
+        intake_period="10 */6 * * *",
+        treatment_duration=None,
+        user_id=schedule.user_id,
+    )
+    session.add(schedule_2)
+    await session.commit()
+
+    response = await client.get("/next_takings", params={"user_id": schedule.user_id})
+    response_json = response.json()
+    for raw in response_json:
+        scheduled = TakingsRead.model_validate(raw)
+        assert 8 <= scheduled.medicine_datetime.hour <= 22
+        assert scheduled.medicine_datetime.minute % 15 == 0
