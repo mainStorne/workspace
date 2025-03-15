@@ -3,13 +3,15 @@ from os import environ  # noqa: ignore
 environ["POSTGRES_DB"] = "test"  # noqa: ignore
 
 
+from datetime import timedelta
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from api import app
 from api.conf import engine
-from api.db import SQLModel
+from api.db import Schedule, SQLModel
 from api.deps import get_session
 
 pytestmark = pytest.mark.anyio
@@ -63,3 +65,13 @@ async def session(connection, transaction):
         yield session
 
     await transaction.rollback()
+
+
+@pytest.fixture()
+async def schedule(session):
+    _schedule = Schedule(
+        medicine_name="test", intake_period="8 12 * * *", user_id="1", treatment_duration=timedelta(days=1)
+    )
+    session.add(_schedule)
+    await session.commit()
+    return _schedule

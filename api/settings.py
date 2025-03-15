@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from pydantic import Field, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -26,4 +28,5 @@ class DatabaseSettings(BaseSettings):
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(extra="allow")
+    NEXT_TAKINGS_PERIOD: timedelta
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)

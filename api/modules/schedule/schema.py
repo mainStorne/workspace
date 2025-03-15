@@ -14,7 +14,7 @@ class ScheduleCreate(SQLModel):
         description="Период приёмов записывается в cron синтаксисе, пример 0 12 * * * - каждый день в ровно 12 часов дня",
         schema_extra={"examples": ["0 12 * * *"]},
     )
-    treatment_duration: timedelta = Field(description="Продолжительность лечения")
+    treatment_duration: timedelta | None = Field(description="Продолжительность лечения null - принимать постоянно")
     user_id: str = Field(sa_column=String(16), description="Медицинский полис состоящий из 16 цифр", max_length=16)
 
     @field_validator("intake_period", mode="after")
@@ -28,7 +28,7 @@ class ScheduleCreate(SQLModel):
 
 
 class ScheduleRead(SQLModel):
-    schedule_id: int
+    id: int
 
 
 class ScheduleCard(SQLModel):
