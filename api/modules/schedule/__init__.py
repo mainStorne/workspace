@@ -6,7 +6,7 @@ from ...db import Schedule
 from ...deps import Session
 from ...utils import to_openapi
 from .manager import schedule_manager
-from .schema import ScheduleCard, ScheduleCreate, ScheduleRead
+from .schema import ScheduleCard, ScheduleCreate, ScheduleRead, TakingsRead
 
 r = APIRouter()
 
@@ -43,9 +43,16 @@ async def schedule(session: Session, user_id: str, schedule_id: int):
 
 @r.get("/schedules", response_model=list[ScheduleRead])
 async def schedules(user_id: str, session: Session):
+    """Возвращает данные о выбранном расписании с рассчитанным
+    графиком приёмов на день
+    """  # noqa: RUF002
     return await schedule_manager.list(session, user_id=user_id)
 
 
-@r.get("/next_takings")
-async def next_takings(session: Session, user_id: str, schedule_id: int):
-    pass
+@r.get("/next_takings", response_model=list[TakingsRead])
+async def next_takings(session: Session, user_id: str):
+    """Возвращает данные о таблетках, которые необходимо принять
+    в ближайшие период (например, в ближайший час). Период
+    времени задается через параметры конфигурации сервиса
+    """  # noqa: RUF002
+    return await schedule_manager.next_takings(session, user_id=user_id)

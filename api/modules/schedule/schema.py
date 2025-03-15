@@ -34,3 +34,7 @@ class ScheduleRead(SQLModel):
 class ScheduleCard(SQLModel):
     medicine_name: str
     medicine_datetime: datetime
+
+
+class TakingsRead(ScheduleCard):
+    id: int
