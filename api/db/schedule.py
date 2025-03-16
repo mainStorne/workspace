@@ -9,10 +9,11 @@ from .mixins import IDMixin
 
 class Schedule(IDMixin, ScheduleCreate, table=True):
     __tablename__ = "schedules"
-    schedule_datetime: datetime = Field(
+    schedule_datetime: datetime | None = Field(
+        default=None,
         sa_column=Column(
             DateTime(timezone=True),
             nullable=False,
             server_default=text("CURRENT_TIMESTAMP"),
-        )
+        ),
     )

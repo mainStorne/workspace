@@ -11,13 +11,17 @@ cron_patter = compile(r"")
 class ScheduleCreate(SQLModel):
     medicine_name: str
     intake_period: str = Field(
-        description="""Период приёмов записывается в cron синтаксисе, пример 0 12 * * * - каждый день в ровно 12 часов дня
-        https://en.wikipedia.org/wiki/Cron#CRON_expression
-        W и # символы не поддерживаются.""",
+        description="Период приёмов записывается в [cron синтаксисе](https://en.wikipedia.org/wiki/Cron#CRON_expression), пример 0 12 * * * - каждый день в ровно 12 часов дня. **W и # символы не поддерживаются**",
         schema_extra={"examples": ["0 12 * * *"]},
     )
     treatment_duration: timedelta | None = Field(description="Продолжительность лечения null - принимать постоянно")
     user_id: int
+
+    @field_validator("treatment_duration", mode="after")
+    @classmethod
+    def validate_treatment_duration(cls, value: timedelta):
+        if value.total_seconds() < 0:
+            raise ValueError("treatment_duration can't be negative!")  # noqa: TRY003
 
     @field_validator("intake_period", mode="after")
     @classmethod

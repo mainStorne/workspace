@@ -24,19 +24,19 @@ class ScheduleManager(ModelManager):
             minute=59,
             second=0,
             microsecond=0,
+            tzinfo=timezone.utc,
         )
         # TODO check for expired and set appropriate stop
         stop = datetime(
-            year=now.year,
-            month=now.month,
-            day=now.day,
-            hour=22,
-            minute=0,
-            second=0,
-            microsecond=0,
+            year=now.year, month=now.month, day=now.day, hour=22, minute=0, second=0, microsecond=0, tzinfo=timezone.utc
+        )
+        expired_datetime = (
+            schedule_in.schedule_datetime + schedule_in.treatment_duration if schedule_in.treatment_duration else stop
         )
         scheduled = []
         for scheduled_datetime in crontab_range(start, stop, CronTab(schedule_in.intake_period)):
+            if scheduled_datetime > expired_datetime:
+                break
             scheduled.append(
                 ScheduleCard.model_construct(
                     medicine_name=schedule_in.medicine_name, medicine_datetime=scheduled_datetime
@@ -50,8 +50,14 @@ class ScheduleManager(ModelManager):
         scheduled = []
         schedules = await self.list(session, user_id=user_id)
         for schedule in schedules:
+            schedule: Schedule
+            expired_datetime = (
+                schedule.schedule_datetime + schedule.treatment_duration if schedule.treatment_duration else stop
+            )
             # TODO check for expired and set appropriate stop if next_takings_period is more then expired then do...
             for scheduled_datetime in crontab_range(start, stop, CronTab(schedule.intake_period)):
+                if scheduled_datetime > expired_datetime:
+                    break
                 scheduled.append(
                     TakingsRead.model_construct(
                         medicine_name=schedule.medicine_name,
