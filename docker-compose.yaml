@@ -4,7 +4,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: always
-    ports: ["5432:5432"]
     env_file:
       - .env
     healthcheck:
@@ -21,6 +20,8 @@ services:
 
     env_file:
       - .env
+
+    ports: ["80:80"]
     restart: always
     environment:
       - PORT=80
