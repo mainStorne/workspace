@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from crontab import CronTab
 from fastapi_sqlalchemy_toolkit import ModelManager
@@ -20,11 +20,12 @@ class ScheduleManager(ModelManager):
             year=now.year,
             month=now.month,
             day=now.day,
-            hour=8,
-            minute=0,
+            hour=7,  # to have a 8:00 schedule
+            minute=59,
             second=0,
             microsecond=0,
         )
+        # TODO check for expired and set appropriate stop
         stop = datetime(
             year=now.year,
             month=now.month,
@@ -35,7 +36,7 @@ class ScheduleManager(ModelManager):
             microsecond=0,
         )
         scheduled = []
-        for scheduled_datetime in self._generate_schedules_datetime(start, stop, schedule_in):
+        for scheduled_datetime in crontab_range(start, stop, CronTab(schedule_in.intake_period)):
             scheduled.append(
                 ScheduleCard.model_construct(
                     medicine_name=schedule_in.medicine_name, medicine_datetime=scheduled_datetime
@@ -43,21 +44,14 @@ class ScheduleManager(ModelManager):
             )
         return scheduled
 
-    @staticmethod
-    def _generate_schedules_datetime(start: datetime, stop: datetime, schedule: Schedule):
-        for scheduled_datetime in crontab_range(start=start, stop=stop, cron=CronTab(schedule.intake_period)):
-            reminder = scheduled_datetime.minute % 15
-            if scheduled_datetime.hour < 8 or scheduled_datetime.hour > 22:
-                continue
-            yield scheduled_datetime + timedelta(minutes=15 - reminder)
-
     async def next_takings(self, session: AsyncSession, user_id: str):
         start = datetime.now(tz=timezone.utc)
         stop = start + settings.NEXT_TAKINGS_PERIOD
         scheduled = []
         schedules = await self.list(session, user_id=user_id)
         for schedule in schedules:
-            for scheduled_datetime in self._generate_schedules_datetime(start, stop, schedule):
+            # TODO check for expired and set appropriate stop if next_takings_period is more then expired then do...
+            for scheduled_datetime in crontab_range(start, stop, CronTab(schedule.intake_period)):
                 scheduled.append(
                     TakingsRead.model_construct(
                         medicine_name=schedule.medicine_name,

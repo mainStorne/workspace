@@ -1,0 +1,24 @@
+name: Deploy
+
+on:
+  # Allow manual trigger of the workflow
+  workflow_dispatch:
+  # Verify build on any push; deploy only on main branch
+  push:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script_stop: true # Stop script on error
+          script: |
+            cd /home/${{ secrets.SSH_USERNAME }}/workspace
+            git pull origin main
+            docker compose up -d --build --pull always

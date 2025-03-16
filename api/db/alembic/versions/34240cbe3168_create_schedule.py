@@ -1,9 +1,8 @@
 """create schedule
 
-
-Revision ID: e9baf9389777
+Revision ID: 34240cbe3168
 Revises:
-Create Date: 2025-03-14 15:04:35.590758
+Create Date: 2025-03-16 11:39:36.926499
 
 """
 
@@ -15,7 +14,7 @@ import sqlmodel
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "e9baf9389777"
+revision: str = "34240cbe3168"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,8 +27,8 @@ def upgrade() -> None:
         "schedules",
         sa.Column("medicine_name", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("intake_period", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("treatment_duration", sa.Interval(), nullable=False),
-        sa.Column("user_id", sqlmodel.sql.sqltypes.AutoString(length=16), nullable=False),
+        sa.Column("treatment_duration", sa.Interval(), nullable=True),
+        sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column(
             "schedule_datetime", sa.DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False

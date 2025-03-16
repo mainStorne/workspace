@@ -4,12 +4,12 @@
     "name": "project",
     // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
     // Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "uv sync --all-groups && uv run pre-commit install --install-hooks",
+	"postCreateCommand": "uv sync --all-groups && uv run pre-commit install --install-hooks && uv run alembic upgrade head",
 
     // Configure tool-specific properties.
 
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"dockerComposeFile": ["docker-compose.yaml"],
+	"dockerComposeFile": ["../docker-compose.dev.yaml"],
 
 	"service": "devcontainer",
 	// Features to add to the dev container. More info: https://containers.dev/features.
@@ -38,7 +38,10 @@
                 "streetsidesoftware.code-spell-checker",
                 "charliermarsh.ruff",
                 "streetsidesoftware.code-spell-checker-russian",
-                "tamasfe.even-better-toml"
+                "tamasfe.even-better-toml",
+                "github.vscode-github-actions",
+                "me-dutour-mathieu.vscode-github-actions",
+                "IronGeek.vscode-env"
             ]
 		}
 	},

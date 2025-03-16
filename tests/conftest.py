@@ -70,7 +70,7 @@ async def session(connection, transaction):
 @pytest.fixture()
 async def schedule(session):
     _schedule = Schedule(
-        medicine_name="test", intake_period="8 12 * * *", user_id="1", treatment_duration=timedelta(days=1)
+        medicine_name="test", intake_period="8 12 * * *", user_id=1, treatment_duration=timedelta(days=1)
     )
     session.add(_schedule)
     await session.commit()
