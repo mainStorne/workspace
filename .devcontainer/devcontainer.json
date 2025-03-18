@@ -41,7 +41,9 @@
                 "tamasfe.even-better-toml",
                 "github.vscode-github-actions",
                 "me-dutour-mathieu.vscode-github-actions",
-                "IronGeek.vscode-env"
+                "IronGeek.vscode-env",
+                "bierner.docs-view",
+                "DavidAnson.vscode-markdownlint"
             ]
 		}
 	},
@@ -59,6 +61,9 @@
 			"version": "latest"
 		},
 		"ghcr.io/devcontainers-extra/features/cookiecutter:2": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
 			"version": "latest"
 		}
 

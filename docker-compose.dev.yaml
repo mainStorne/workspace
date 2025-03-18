@@ -27,7 +27,7 @@ services:
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
 
   db:
-    image: postgres:latest
+    image: postgres:15.2
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports: ["5432:5432"]

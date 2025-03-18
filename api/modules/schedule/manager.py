@@ -26,7 +26,6 @@ class ScheduleManager(ModelManager):
             microsecond=0,
             tzinfo=timezone.utc,
         )
-        # TODO check for expired and set appropriate stop
         stop = datetime(
             year=now.year, month=now.month, day=now.day, hour=22, minute=0, second=0, microsecond=0, tzinfo=timezone.utc
         )
@@ -54,7 +53,6 @@ class ScheduleManager(ModelManager):
             expired_datetime = (
                 schedule.schedule_datetime + schedule.treatment_duration if schedule.treatment_duration else stop
             )
-            # TODO check for expired and set appropriate stop if next_takings_period is more then expired then do...
             for scheduled_datetime in crontab_range(start, stop, CronTab(schedule.intake_period)):
                 if scheduled_datetime > expired_datetime:
                     break

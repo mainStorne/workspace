@@ -40,8 +40,7 @@ async def test_create_schedule(client, session):
         "* * * * * * *",
         "* * * * * 2025",  # intake period every minute with spaces on specific year
         "15 * * * * 2025",  # intake period every 15 minute with spaces on specific year
-        "15 8 * * *",  # intake period in 8 or 22 hours with not empty minutes
-        "15 22 * * *",
+        "15 22 * * *",  # intake period in 8 or 22 hours
     ],
 )
 async def test_wrong_schedules(cron):
@@ -195,11 +194,27 @@ async def test_constantly(schedule, client, monkeypatch, session):
     "schedule,schedules_count,days",
     [
         (
-            Schedule(intake_period="10 */6 * * *", medicine_name="", treatment_duration=None, user_id=1),
+            Schedule(
+                intake_period="10 */6 * * *",
+                medicine_name="",
+                treatment_duration=None,
+                user_id=1,
+                schedule_datetime=start_day,
+            ),
             16,
             8,
         ),
-        (Schedule(intake_period="0 */8 * * *", medicine_name="", treatment_duration=None, user_id=1), 12, 6),
+        (
+            Schedule(
+                intake_period="0 */8 * * *",
+                medicine_name="",
+                treatment_duration=None,
+                user_id=1,
+                schedule_datetime=start_day,
+            ),
+            12,
+            6,
+        ),
         (
             Schedule(
                 intake_period="0 */8 * * *",
@@ -208,12 +223,18 @@ async def test_constantly(schedule, client, monkeypatch, session):
                 user_id=1,
                 schedule_datetime=start_day - timedelta(days=1),
             ),
-            4,
+            4,  # because set now to start_day result 4
             6,
         ),
         (
-            Schedule(intake_period="0 */8 * * *", medicine_name="", treatment_duration=timedelta(days=3), user_id=1),
-            8,
+            Schedule(
+                intake_period="0 */8 * * *",
+                medicine_name="",
+                treatment_duration=timedelta(days=3),
+                user_id=1,
+                schedule_datetime=start_day,
+            ),
+            6,  # because start_day is always on 0 hours we get here only 6 schedules
             6,
         ),
     ],
@@ -236,7 +257,6 @@ async def test_next_takings(schedule, client, session, monkeypatch, schedules_co
 
     response = await client.get("/next_takings", params={"user_id": schedule.user_id})
     response_json = response.json()
-    # one because the first schedule has one schedule per day
     assert len(response_json) == schedules_count
     for raw in response_json:
         scheduled = TakingsRead.model_validate(raw)

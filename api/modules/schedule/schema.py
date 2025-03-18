@@ -3,6 +3,7 @@ from re import compile
 
 from crontab import CronTab
 from pydantic import field_validator
+from sqlalchemy import BigInteger, Column
 from sqlmodel import Field, SQLModel
 
 cron_patter = compile(r"")
@@ -15,20 +16,18 @@ class ScheduleCreate(SQLModel):
         schema_extra={"examples": ["0 12 * * *"]},
     )
     treatment_duration: timedelta | None = Field(description="Продолжительность лечения null - принимать постоянно")
-    user_id: int
+    user_id: int = Field(sa_column=Column(BigInteger))
 
     @field_validator("treatment_duration", mode="after")
     @classmethod
-    def validate_treatment_duration(cls, value: timedelta):
-        if value.total_seconds() < 0:
-            raise ValueError("treatment_duration can't be negative!")  # noqa: TRY003
+    def validate_treatment_duration(cls, value: timedelta | None):
+        if value is not None and value.total_seconds() <= 3600:
+            raise ValueError("treatment_duration can't be negative or so small!")  # noqa: TRY003
+        return value
 
     @field_validator("intake_period", mode="after")
     @classmethod
     def validate_cron_expression(cls, value: str):
-        """
-        raise: ValueError
-        """
         crontab = CronTab(value)
         # big cron syntax * * * * * * (with seconds and years)
         if (

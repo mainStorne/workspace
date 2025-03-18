@@ -1,0 +1,26 @@
+name: Deploy
+
+on:
+  # Allow manual trigger of the workflow
+  workflow_dispatch:
+  # Verify build on any push; deploy only on main branch
+  push:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create .env file
+        run: |
+          echo "POSTGRES_DB=test" > .env
+          echo "POSTGRES_USER=test" >> .env
+          echo "POSTGRES_PASSWORD=test" >> .env
+          echo "POSTGRES_PASSWORD=test" >> .env
+          echo "POSTGRES_PORT=5432" >> .env
+          echo "NEXT_TAKINGS_PERIOD=P3D" >> .env
+
+      - name: Run Docker Compose
+        run: docker compose -f docker-compose.tests.yaml up --build --exit-code-from tests
