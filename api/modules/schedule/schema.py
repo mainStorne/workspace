@@ -11,7 +11,7 @@ class ScheduleCreate(SQLModel):
     medicine_name: str
     intake_period: str = Field(
         description="Период приёмов записывается в [cron синтаксисе](https://en.wikipedia.org/wiki/Cron#CRON_expression), пример 0 12 * * * - каждый день в ровно 12 часов дня. **W и # символы не поддерживаются**",
-        schema_extra={"examples": ["0 12 * * *"]},
+        schema_extra={"examples": ["12"]},
     )
     user_id: int = Field(sa_column=Column(BigInteger))
     intake_finish: datetime | None = Field(
@@ -31,10 +31,11 @@ class ScheduleCreate(SQLModel):
     @field_validator("intake_period", mode="after")
     @classmethod
     def validate_cron_expression(cls, value: str):
+        value = f"0 {value} * * *"
         try:
             crontab = CronTab(value)
         except ValueError:
-            raise ValueError("cron exprassion is wrong!")  # noqa: B904, TRY003
+            raise ValueError("cron expression is wrong!")  # noqa: B904, TRY003
         # big cron syntax * * * * * * (with seconds and years)
         if (
             crontab.matchers.second.input == "*"

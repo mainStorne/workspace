@@ -22,13 +22,22 @@ def assert_scheduled(scheduled: datetime):
 async def test_create_schedule(client, session):
     schedule = ScheduleCreate(
         medicine_name="name",
-        intake_period="0 12 * * *",
+        intake_period="12",
         intake_finish=intake_start + timedelta(days=5),
         user_id=2,
         intake_start=intake_start,
     )
-
-    response = await client.post("/schedule", content=schedule.model_dump_json())
+    # create json so because schedule schema created intake_period in full form of cron syntax during initialization
+    response = await client.post(
+        "/schedule",
+        json={
+            "intake_period": "12",
+            "medicine_name": "name",
+            "user_id": 2,
+            "intake_start": intake_start.isoformat(),
+            "intake_finish": (intake_start + timedelta(days=3)).isoformat(),
+        },
+    )
     assert response.status_code == 200
     schedule_id = response.json()["id"]
     schedule = await session.get(Schedule, schedule_id)
@@ -38,13 +47,7 @@ async def test_create_schedule(client, session):
 @pytest.mark.parametrize(
     "cron",
     [
-        "* 12 * * *",  # intake period every minute in 12 hours every day
-        "* * * * *",  # intake period every minute
-        " * * * * * * * ",  # intake period every second with spaces
-        "* * * * * * *",
-        "* * * * * 2025",  # intake period every minute with spaces on specific year
-        "15 * * * * 2025",  # intake period every 15 minute with spaces on specific year
-        "15 22 * * *",  # intake period in 8 or 22 hours
+        "23",  # intake period in 8 or 22 hours
     ],
 )
 async def test_wrong_schedules(cron):
@@ -56,7 +59,7 @@ async def test_negative_duration():
     with pytest.raises(ValidationError):
         ScheduleCreate(
             medicine_name="name",
-            intake_period="0 * * * *",
+            intake_period="*",
             intake_finish=intake_start - timedelta(days=1),
             intake_start=intake_start,
             user_id=2,
