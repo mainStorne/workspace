@@ -9,7 +9,7 @@ from api.modules.schedule.schema import ScheduleCreate, TakingsRead
 pytestmark = pytest.mark.anyio
 
 now = datetime.now(tz=timezone.utc)
-start_day = datetime(year=now.year, month=now.month, day=now.day, hour=0, tzinfo=timezone.utc)
+intake_start = datetime(year=now.year, month=now.month, day=now.day, hour=0, tzinfo=timezone.utc)
 
 
 def assert_scheduled(scheduled: datetime):
@@ -21,7 +21,11 @@ def assert_scheduled(scheduled: datetime):
 
 async def test_create_schedule(client, session):
     schedule = ScheduleCreate(
-        medicine_name="name", intake_period="0 12 * * *", treatment_duration=timedelta(days=5), user_id=2
+        medicine_name="name",
+        intake_period="0 12 * * *",
+        intake_finish=intake_start + timedelta(days=5),
+        user_id=2,
+        intake_start=intake_start,
     )
 
     response = await client.post("/schedule", content=schedule.model_dump_json())
@@ -45,7 +49,7 @@ async def test_create_schedule(client, session):
 )
 async def test_wrong_schedules(cron):
     with pytest.raises(ValidationError):
-        ScheduleCreate(medicine_name="name", intake_period=cron, treatment_duration=None, user_id=2)
+        ScheduleCreate(medicine_name="name", intake_period=cron, intake_finish=None, user_id=2)
 
 
 async def test_negative_duration():
@@ -53,7 +57,8 @@ async def test_negative_duration():
         ScheduleCreate(
             medicine_name="name",
             intake_period="0 * * * *",
-            treatment_duration=timedelta(days=0, milliseconds=-1),
+            intake_finish=intake_start - timedelta(days=1),
+            intake_start=intake_start,
             user_id=2,
         )
 
@@ -66,8 +71,8 @@ async def test_negative_duration():
                 medicine_name="",
                 user_id=1,
                 intake_period="15 20 * * *",
-                treatment_duration=None,
-                schedule_datetime=start_day,
+                intake_finish=None,
+                intake_start=intake_start,
             ),
             1,
         ),
@@ -76,8 +81,8 @@ async def test_negative_duration():
                 medicine_name="",
                 user_id=1,
                 intake_period="*/5 21 * * *",
-                treatment_duration=None,
-                schedule_datetime=start_day,
+                intake_finish=None,
+                intake_start=intake_start,
             ),
             4,
         ),
@@ -86,8 +91,8 @@ async def test_negative_duration():
                 medicine_name="",
                 user_id=1,
                 intake_period="0 * * * *",
-                treatment_duration=None,
-                schedule_datetime=start_day,
+                intake_finish=None,
+                intake_start=intake_start,
             ),
             14,
         ),
@@ -96,8 +101,8 @@ async def test_negative_duration():
                 medicine_name="",
                 user_id=1,
                 intake_period="0 * * * *",
-                treatment_duration=timedelta(hours=6),
-                schedule_datetime=start_day,
+                intake_finish=intake_start + timedelta(hours=6),
+                intake_start=intake_start,
             ),
             0,
         ),
@@ -106,8 +111,8 @@ async def test_negative_duration():
                 medicine_name="",
                 user_id=1,
                 intake_period="0 * * * *",
-                treatment_duration=timedelta(hours=22),
-                schedule_datetime=start_day,
+                intake_finish=intake_start + timedelta(hours=22),
+                intake_start=intake_start,
             ),
             14,
         ),
@@ -116,8 +121,8 @@ async def test_negative_duration():
                 medicine_name="",
                 user_id=1,
                 intake_period="0 9-15 * * *",
-                treatment_duration=timedelta(hours=22),
-                schedule_datetime=start_day,
+                intake_finish=intake_start + timedelta(hours=22),
+                intake_start=intake_start,
             ),
             7,
         ),
@@ -126,8 +131,8 @@ async def test_negative_duration():
                 medicine_name="",
                 user_id=1,
                 intake_period="0 * * * *",
-                treatment_duration=timedelta(hours=10),
-                schedule_datetime=start_day,
+                intake_finish=intake_start + timedelta(hours=10),
+                intake_start=intake_start,
             ),
             2,
         ),
@@ -136,8 +141,8 @@ async def test_negative_duration():
                 medicine_name="",
                 user_id=1,
                 intake_period="0 * * * *",
-                treatment_duration=timedelta(hours=20),
-                schedule_datetime=start_day,
+                intake_finish=intake_start + timedelta(hours=20),
+                intake_start=intake_start,
             ),
             12,
         ),
@@ -145,9 +150,9 @@ async def test_negative_duration():
             Schedule(
                 medicine_name="",
                 user_id=1,
-                intake_period=f"0 * {(start_day + timedelta(days=1)).day} * *",
-                treatment_duration=None,
-                schedule_datetime=start_day,
+                intake_period=f"0 * {(intake_start + timedelta(days=1)).day} * *",
+                intake_finish=None,
+                intake_start=intake_start,
             ),
             0,
         ),
@@ -161,7 +166,9 @@ async def test_schedule_period(schedule, client, session, schedules_count, monke
     class MockDateTime:
         @classmethod
         def now(cls, tz=None):
-            return datetime(year=start_day.year, month=start_day.month, day=start_day.day, hour=0, tzinfo=timezone.utc)
+            return datetime(
+                year=intake_start.year, month=intake_start.month, day=intake_start.day, hour=0, tzinfo=timezone.utc
+            )
 
     monkeypatch.setattr("api.modules.schedule.datetime", MockDateTime)
     session.add(schedule)
@@ -175,7 +182,7 @@ async def test_expired_exception(schedule, client, monkeypatch):
     class MockDateTime:
         @classmethod
         def now(cls, tz=None):
-            return schedule.schedule_datetime + schedule.treatment_duration + timedelta(days=1)
+            return schedule.intake_finish + timedelta(days=1)
 
     monkeypatch.setattr("api.modules.schedule.datetime", MockDateTime)
     response = await client.get("/schedule", params={"user_id": schedule.user_id, "schedule_id": schedule.id})
@@ -183,7 +190,7 @@ async def test_expired_exception(schedule, client, monkeypatch):
 
 
 async def test_constantly(schedule, client, monkeypatch, session):
-    schedule.treatment_duration = None
+    schedule.intake_finish = None
     session.add(schedule)
     await session.commit()
     response = await client.get("/schedule", params={"user_id": schedule.user_id, "schedule_id": schedule.id})
@@ -197,9 +204,9 @@ async def test_constantly(schedule, client, monkeypatch, session):
             Schedule(
                 intake_period="10 */6 * * *",
                 medicine_name="",
-                treatment_duration=None,
+                intake_finish=None,
                 user_id=1,
-                schedule_datetime=start_day,
+                intake_start=intake_start,
             ),
             16,
             8,
@@ -208,9 +215,9 @@ async def test_constantly(schedule, client, monkeypatch, session):
             Schedule(
                 intake_period="0 */8 * * *",
                 medicine_name="",
-                treatment_duration=None,
+                intake_finish=None,
                 user_id=1,
-                schedule_datetime=start_day,
+                intake_start=intake_start,
             ),
             12,
             6,
@@ -219,22 +226,33 @@ async def test_constantly(schedule, client, monkeypatch, session):
             Schedule(
                 intake_period="0 */8 * * *",
                 medicine_name="",
-                treatment_duration=timedelta(days=3),
+                intake_finish=intake_start + timedelta(days=3),
                 user_id=1,
-                schedule_datetime=start_day - timedelta(days=1),
+                intake_start=intake_start - timedelta(days=1),
             ),
-            4,  # because set now to start_day result 4
+            6,
             6,
         ),
         (
             Schedule(
                 intake_period="0 */8 * * *",
                 medicine_name="",
-                treatment_duration=timedelta(days=3),
+                intake_start=intake_start,
+                intake_finish=intake_start + timedelta(days=3, hours=22),
                 user_id=1,
-                schedule_datetime=start_day,
             ),
-            6,  # because start_day is always on 0 hours we get here only 6 schedules
+            8,
+            6,
+        ),
+        (
+            Schedule(
+                intake_period="0 */8 * * *",
+                medicine_name="",
+                intake_start=intake_start,
+                intake_finish=intake_start + timedelta(days=3),
+                user_id=1,
+            ),
+            6,
             6,
         ),
     ],
@@ -248,7 +266,7 @@ async def test_next_takings(schedule, client, session, monkeypatch, schedules_co
     class MockDateTime:
         @classmethod
         def now(cls, tz=None):
-            return start_day
+            return intake_start
 
     monkeypatch.setattr("api.modules.schedule.manager.datetime", MockDateTime)
 

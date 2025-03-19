@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:15.2
+    image: postgres:latest
     env_file:
       - .env
     environment:

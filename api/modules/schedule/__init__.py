@@ -37,9 +37,7 @@ async def schedule(session: Session, user_id: int, schedule_id: int):
     schedule = await schedule_manager.get_or_404(session, user_id=user_id, id=schedule_id)
     # test for expired
 
-    if schedule.treatment_duration and schedule.schedule_datetime + schedule.treatment_duration < datetime.now(
-        tz=timezone.utc
-    ):
+    if schedule.intake_finish and schedule.intake_finish < datetime.now(tz=timezone.utc):
         raise ScheduleExpired
 
     return schedule_manager.schedule(schedule)

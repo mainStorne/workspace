@@ -23,4 +23,4 @@ jobs:
           echo "NEXT_TAKINGS_PERIOD=P3D" >> .env
 
       - name: Run Docker Compose
-        run: docker compose -f docker-compose.tests.yaml up --build --exit-code-from tests
+        run: docker compose -f docker-compose.tests.yaml up --exit-code-from tests
