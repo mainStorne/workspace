@@ -3,7 +3,6 @@ name: Test
 on:
   # Allow manual trigger of the workflow
   workflow_dispatch:
-  # Verify build on any push; deploy only on main branch
   push:
 
 jobs:
