@@ -8,7 +8,7 @@ from sqlmodel import Field, SQLModel
 
 
 class ScheduleCreate(SQLModel):
-    medicine_name: str
+    medicine_name: str = Field(index=True)
     intake_period: str = Field(
         description="Период приёмов записывается в [cron синтаксисе](https://en.wikipedia.org/wiki/Cron#CRON_expression), пример 0 12 * * * - каждый день в ровно 12 часов дня. **W и # символы не поддерживаются**",
         schema_extra={"examples": ["12"]},

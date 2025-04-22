@@ -1,0 +1,115 @@
+Задание №2 Создание таблицы разработчики
+
+CREATE TABLE developers (
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	name TEXT NOT NULL,
+	department TEXT NOT NULL,
+	geolocation GEOMETRY NOT NULL,
+	last_known_ip INET NOT NULL,
+	is_available BOOLEAN DEFAULT FALSE
+)
+
+
+Задание №3, заполнение базы данных было выполнено в скрипте main.ipynb с помощью генерации рандомных значений библиотеки faker
+
+SELECT * FROM developers;
+
+id	name	department	geolocation	last_known_ip	is_available
+dc0b5eca-9e60-4459-8906-2aaf93853f98	Robert	android	0101000020AD10000007600322C45A65C0E659492BBEEE45C0	2.28.87.111	True
+379c2200-1d57-4dad-8ce1-7fdc54018f29	Mary	android	0101000020AD100000E3A8DC44AD5360401EC18D942DF2FDBF	203.170.100.136	True
+4904647b-60c3-4947-afea-d374042857c5	Patricia	ios	0101000020AD1000009B5434D6FE735040B343FCC396FE01C0	14.91.43.12	True
+81a34b57-2ecb-49b9-8f14-93e6f887b87b	Mary	ios	0101000020AD1000002D211FF46C1C56C00D8AE6012CA832C0	222.225.138.169	False
+d459380e-c6df-486e-b65b-9173ba3288fd	Patricia	frontend	0101000020AD100000E065868DB202514008E412471E4429C0	34.228.48.101	True
+7ee7c785-cb27-4727-815e-b2251053db78	Robert	ios	0101000020AD100000617138F3AB313DC0E144F46BEBEB36C0	8.214.108.100	True
+5ac721fe-6df9-4e64-96df-b9f583bfa79b	John	frontend	0101000020AD1000007E8E8F1667F35AC03A419B1C3ED12840	34.100.63.61	False
+f8d047d2-7750-44a9-817c-ac0a4bf43073	John	android	0101000020AD100000E6CAA0DAE0384A40E7012CF2EB4704C0	30.87.31.141	False
+7eb4b5b6-2a80-4fb3-a23a-55d81c52f96d	Patricia	frontend	0101000020AD100000DB6B41EF0D6C6340386A85E97B8120C0	150.152.144.26	True
+6f7a7e67-8d85-40b1-aa6f-d3593e871925	Patricia	ios	0101000020AD100000A33B889D29FC4DC08CF7E3F6CBD716C0	25.128.116.95	True
+
+
+Задание №4
+
+1. EXPLAIN SELECT * FROM developers WHERE name LIKE 'James%';
+	Seq Scan on developers  (cost=0.00..274.25 rows=105 width=91)
+	Filter: (name ~~ 'James%'::text)
+
+2. EXPLAIN SELECT * FROM developers WHERE department = 'backend';
+Seq Scan on developers  (cost=0.00..274.26 rows=14 width=91)
+  Filter: (department = 'backend'::text)
+
+3. EXPLAIN SELECT * FROM developers WHERE last_known_ip = '192.168.1.10';
+Seq Scan on developers  (cost=0.00..274.25 rows=1 width=91)
+  Filter: (last_known_ip = '192.168.1.10'::inet)
+
+4. EXPLAIN SELECT * FROM developers WHERE is_available = TRUE;
+Seq Scan on developers  (cost=0.00..249.20 rows=5080 width=91)
+  Filter: is_available
+
+
+Задание со звездочкой
+
+SELECT ST_Distance(ST_Transform('SRID=4269;POINT(54.7063888889 20.6608333333)'::geometry, 3857), ST_Transform(geolocation, 3857)) * cosd(20.6608333333),
+	geolocation
+FROM
+	developers
+WHERE ST_Distance(ST_Transform('SRID=4269;POINT(54.7063888889 20.6608333333)'::geometry, 3857), ST_Transform(geolocation, 3857)) * cosd(20.6608333333) <= 10000;
+
+
+Задание №5 и 6
+
+Поля:
+	id:
+		Изначально при PRIMARY KEY создается Index
+		Запрос:
+			EXPLAIN SELECT * FROM developers
+			WHERE ID = 'dc0b5eca-9e60-4459-8906-2aaf93853f98'
+
+			Index Scan using developers_pkey on developers  (cost=0.29..8.30 rows=1 width=91)
+				Index Cond: (id = 'dc0b5eca-9e60-4459-8906-2aaf93853f98'::uuid)
+
+	name:
+		У этого поля не было индекса, команда создания: CREATE INDEX idx_developers_name ON developers (name);
+		Запрос:
+			EXPLAIN SELECT * FROM developers WHERE name LIKE 'James%';
+			Seq Scan on developers  (cost=0.00..274.25 rows=105 width=91)
+				Filter: (name ~~ 'James%'::text)
+		Как можно заметить использовалось последовательное сканирование, то есть индекс не использовался
+
+	department:
+		У этого поля не было индекса, команда создания: CREATE INDEX idx_developers_department ON developers (department);
+		Запрос:
+			Bitmap Heap Scan on developers  (cost=4.11..47.41 rows=14 width=91)
+			Recheck Cond: (department = 'backend'::text)
+			->  Bitmap Index Scan on idx_developers_department  (cost=0.00..4.11 rows=14 width=0)
+					Index Cond: (department = 'backend'::text)
+		Благодаря индексу запрос стал выполняться быстрее, используя стратегию Bitmap Heap Scan
+
+	last_known_ip:
+		У этого поля не было индекса, команда создания: CREATE INDEX idx_developers_last_known_ip ON developers USING HASH (last_known_ip)
+		Запрос:
+			Index Scan using idx_developers_last_known_ip on developers  (cost=0.00..8.02 rows=1 width=91)"
+				Index Cond: (last_known_ip = '192.168.1.10'::inet)"
+
+			Или с обычным индексом не HASH
+
+			Index Scan using idx_developers_last_known_ip on developers  (cost=0.29..8.30 rows=1 width=91)"
+			  Index Cond: (last_known_ip = '192.168.1.10'::inet)"
+
+			Как можно заметить разница есть особенно в начальной фазе запроса
+
+		Использовался HASH так как чаще всего будут запросы на точное совпадение
+
+	is_available:
+		У этого поля не было индекса, команда создания: CREATE INDEX idx_developers_is_available ON developers (is_available)
+		Запрос:
+			Seq Scan on developers  (cost=0.00..249.21 rows=5081 width=91)
+				Filter: is_available
+
+	geolocation:
+		У этого поля не было индекса, команда создания: CREATE INDEX idx_developers_geolocation ON developers USING GIST (geolocation)
+		Запрос:
+			Seq Scan on developers  (cost=0.00..334332.67 rows=3340 width=40)
+  				Filter: ((st_distance('0101000020110F0000010DACD6273B57415922791DBDF04141'::geometry, st_transform(geolocation, 3857)) * '0.9356854431593722'::double precision) <= '10000'::double precision)
+				JIT:
+  				Functions: 4
+  				Options: Inlining false, Optimization false, Expressions true, Deforming true
