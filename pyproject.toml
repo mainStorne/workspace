@@ -19,6 +19,7 @@ dependencies = [
     "alembic>=1.15.1",
     "asyncpg>=0.30.0",
     "crontab>=1.0.1",
+    "datamodel-code-generator>=0.30.0",
     "fastapi>=0.115.11",
     "fastapi-sqlalchemy-toolkit>=0.7.12",
     "geoalchemy2>=0.17.1",

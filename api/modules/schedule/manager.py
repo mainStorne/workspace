@@ -14,7 +14,7 @@ class ScheduleManager(ModelManager):
     def __init__(self, default_ordering=None):
         super().__init__(Schedule, default_ordering)
 
-    def schedule(self, schedule_in: Schedule) -> list[ScheduleCard]:
+    def _schedule(self, schedule_in: Schedule):
         now = datetime.now(tz=timezone.utc)
         start = datetime(
             year=now.year,
@@ -30,10 +30,14 @@ class ScheduleManager(ModelManager):
             year=now.year, month=now.month, day=now.day, hour=22, minute=0, second=0, microsecond=0, tzinfo=timezone.utc
         )
         expired_datetime = schedule_in.intake_finish if schedule_in.intake_finish else stop
-        scheduled = []
         for scheduled_datetime in crontab_range(start, stop, CronTab(schedule_in.intake_period)):
             if scheduled_datetime > expired_datetime:
-                break
+                return
+            yield scheduled_datetime
+
+    def schedule(self, schedule_in: Schedule) -> list[ScheduleCard]:
+        scheduled = []
+        for scheduled_datetime in self._schedule(schedule_in):
             scheduled.append(
                 ScheduleCard.model_construct(
                     medicine_name=schedule_in.medicine_name, medicine_datetime=scheduled_datetime

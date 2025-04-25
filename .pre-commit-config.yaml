@@ -7,21 +7,19 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-json
-        exclude: ^({{cookiecutter.project_name}}/\.devcontainer/devcontainer\.json|\.devcontainer/devcontainer\.json|{{cookiecutter.project_name}}/|\.vscode/launch\.json)$
+        exclude: ^(\.vscode/launch\.json|\.devcontainer/devcontainer\.json)$
       - id: pretty-format-json
-        exclude: ^({{cookiecutter.project_name}}/\.devcontainer/devcontainer\.json|\.devcontainer/devcontainer\.json|{{cookiecutter.project_name}}/|\.vscode/launch\.json)$
+        exclude: ^(\.vscode/launch\.json|\.devcontainer/devcontainer\.json)$
         args: [--autofix]
       - id: check-toml
-        exclude: ^{{cookiecutter.project_name}}/
       - id: check-yaml
-        exclude: ^{{cookiecutter.project_name}}/
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.6.3"
     hooks:
       - id: ruff
         args: [--exit-non-zero-on-fix, --config=pyproject.toml]
-        exclude: ^{{cookiecutter.project_name}}
       - id: ruff-format
         args: [--config=pyproject.toml]
-        exclude: ^{{cookiecutter.project_name}}
+
+exclude: ^api/grpc/generated/

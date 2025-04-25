@@ -1,0 +1,51 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+package schedule;
+
+
+service ScheduleService {
+    rpc CreateSchedule(CreateScheduleRequest) returns (CreateScheduleResponse);
+
+    rpc GetScheduleIds(GetScheduleIdsRequest) returns (GetScheduleIdsResponse);
+
+    rpc MakeSchedule(MakeScheduleRequest) returns (MakeScheduleResponse);
+}
+
+
+message GetScheduleIdsRequest {
+    int64 user_id = 1;
+}
+
+message GetScheduleIdsResponse {
+    repeated int64 id = 1;
+
+}
+
+message MakeScheduleRequest {
+    int64 user_id = 1;
+    int32 schedule_id = 2;
+
+}
+
+
+message MakeScheduleResponseItem {
+    string medicine_name= 1;
+    google.protobuf.Timestamp medicine_datetime = 2;
+
+}
+
+message MakeScheduleResponse {
+    repeated MakeScheduleResponseItem item = 1;
+}
+
+message CreateScheduleRequest {
+    string medicine_name = 1;
+    string intake_period = 2;
+    int64 user_id = 3;
+    optional google.protobuf.Timestamp intake_finish = 4;
+}
+
+
+message CreateScheduleResponse {
+    int32 id = 1;
+}
