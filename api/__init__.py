@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -12,7 +11,7 @@ from .modules import schedule
 async def lifespan(app: FastAPI):
     server = Server(ScheduleServiceServicer(), 50051)
     await server.start()
-    asyncio.create_task(server.wait_for_termination())  # noqa: RUF006
+    # asyncio.create_task(server.wait_for_termination())
     yield
     await server.stop()
 

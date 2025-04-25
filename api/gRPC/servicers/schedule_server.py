@@ -30,7 +30,9 @@ class ScheduleServiceServicer(_ScheduleServiceServicer):
                 medicine_name=request.medicine_name,
                 intake_period=request.intake_period,
                 user_id=request.user_id,
-                intake_finish=datetime.fromtimestamp(request.intake_finish.seconds, tz=timezone.utc),
+                intake_finish=datetime.fromtimestamp(request.intake_finish.seconds, tz=timezone.utc)
+                if request.intake_finish.seconds != 0
+                else None,
             )
         except ValidationError:
             return await context.abort(grpc.StatusCode.ABORTED, "Validation error")

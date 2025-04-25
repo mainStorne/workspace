@@ -1,13 +1,8 @@
-from collections.abc import Iterable as _Iterable
-from collections.abc import Mapping as _Mapping
-from typing import ClassVar as _ClassVar
-from typing import Optional as _Optional
-from typing import Union as _Union
-
-from google.protobuf import descriptor as _descriptor
-from google.protobuf import message as _message
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from google.protobuf.internal import containers as _containers
+from google.protobuf import descriptor as _descriptor
+from google.protobuf import message as _message
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -37,11 +32,7 @@ class MakeScheduleResponseItem(_message.Message):
     MEDICINE_DATETIME_FIELD_NUMBER: _ClassVar[int]
     medicine_name: str
     medicine_datetime: _timestamp_pb2.Timestamp
-    def __init__(
-        self,
-        medicine_name: _Optional[str] = ...,
-        medicine_datetime: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...,
-    ) -> None: ...
+    def __init__(self, medicine_name: _Optional[str] = ..., medicine_datetime: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class MakeScheduleResponse(_message.Message):
     __slots__ = ("items",)
@@ -59,13 +50,7 @@ class CreateScheduleRequest(_message.Message):
     intake_period: str
     user_id: int
     intake_finish: _timestamp_pb2.Timestamp
-    def __init__(
-        self,
-        medicine_name: _Optional[str] = ...,
-        intake_period: _Optional[str] = ...,
-        user_id: _Optional[int] = ...,
-        intake_finish: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...,
-    ) -> None: ...
+    def __init__(self, medicine_name: _Optional[str] = ..., intake_period: _Optional[str] = ..., user_id: _Optional[int] = ..., intake_finish: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class CreateScheduleResponse(_message.Message):
     __slots__ = ("id",)
@@ -87,9 +72,7 @@ class GetNextTakingsResponseItem(_message.Message):
     medicine_name: str
     intake_period: str
     id: int
-    def __init__(
-        self, medicine_name: _Optional[str] = ..., intake_period: _Optional[str] = ..., id: _Optional[int] = ...
-    ) -> None: ...
+    def __init__(self, medicine_name: _Optional[str] = ..., intake_period: _Optional[str] = ..., id: _Optional[int] = ...) -> None: ...
 
 class GetNextTakingsResponse(_message.Message):
     __slots__ = ("items",)
