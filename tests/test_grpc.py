@@ -26,7 +26,7 @@ async def stub():
 
 async def test_make_schedule(stub):
     response = await stub.CreateSchedule(
-        CreateScheduleRequest(user_id=1, medicine_name="test", intake_period="8 12 * * *", intake_finish=None)
+        CreateScheduleRequest(user_id=1, medicine_name="test", intake_period="12", intake_finish=None)
     )
 
     assert response.id
