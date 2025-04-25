@@ -1,14 +1,15 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import HTTPException, status
 
 from ...db import Schedule
 from ...deps import Session
+from ...routers.trace_router import TraceRouter
 from ...utils import to_openapi
 from .manager import schedule_manager
 from .schema import ScheduleCard, ScheduleCreate, ScheduleRead, TakingsRead
 
-r = APIRouter(tags=["Schedule"])
+r = TraceRouter(tags=["Schedule"])
 
 
 @r.post("/schedule", response_model=ScheduleRead)
