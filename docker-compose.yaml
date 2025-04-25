@@ -21,7 +21,7 @@ services:
     env_file:
       - .env
 
-    ports: ["80:80"]
+    ports: ["80:80", "50051:50051"]
     restart: always
     environment:
       - PORT=80

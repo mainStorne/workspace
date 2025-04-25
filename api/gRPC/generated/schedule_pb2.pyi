@@ -18,10 +18,10 @@ class GetScheduleIdsRequest(_message.Message):
     def __init__(self, user_id: _Optional[int] = ...) -> None: ...
 
 class GetScheduleIdsResponse(_message.Message):
-    __slots__ = ("id",)
-    ID_FIELD_NUMBER: _ClassVar[int]
-    id: _containers.RepeatedScalarFieldContainer[int]
-    def __init__(self, id: _Optional[_Iterable[int]] = ...) -> None: ...
+    __slots__ = ("ids",)
+    IDS_FIELD_NUMBER: _ClassVar[int]
+    ids: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class MakeScheduleRequest(_message.Message):
     __slots__ = ("user_id", "schedule_id")
@@ -44,10 +44,10 @@ class MakeScheduleResponseItem(_message.Message):
     ) -> None: ...
 
 class MakeScheduleResponse(_message.Message):
-    __slots__ = ("item",)
-    ITEM_FIELD_NUMBER: _ClassVar[int]
-    item: _containers.RepeatedCompositeFieldContainer[MakeScheduleResponseItem]
-    def __init__(self, item: _Optional[_Iterable[_Union[MakeScheduleResponseItem, _Mapping]]] = ...) -> None: ...
+    __slots__ = ("items",)
+    ITEMS_FIELD_NUMBER: _ClassVar[int]
+    items: _containers.RepeatedCompositeFieldContainer[MakeScheduleResponseItem]
+    def __init__(self, items: _Optional[_Iterable[_Union[MakeScheduleResponseItem, _Mapping]]] = ...) -> None: ...
 
 class CreateScheduleRequest(_message.Message):
     __slots__ = ("medicine_name", "intake_period", "user_id", "intake_finish")
@@ -72,3 +72,27 @@ class CreateScheduleResponse(_message.Message):
     ID_FIELD_NUMBER: _ClassVar[int]
     id: int
     def __init__(self, id: _Optional[int] = ...) -> None: ...
+
+class GetNextTakingsRequest(_message.Message):
+    __slots__ = ("user_id",)
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
+    user_id: int
+    def __init__(self, user_id: _Optional[int] = ...) -> None: ...
+
+class GetNextTakingsResponseItem(_message.Message):
+    __slots__ = ("medicine_name", "intake_period", "id")
+    MEDICINE_NAME_FIELD_NUMBER: _ClassVar[int]
+    INTAKE_PERIOD_FIELD_NUMBER: _ClassVar[int]
+    ID_FIELD_NUMBER: _ClassVar[int]
+    medicine_name: str
+    intake_period: str
+    id: int
+    def __init__(
+        self, medicine_name: _Optional[str] = ..., intake_period: _Optional[str] = ..., id: _Optional[int] = ...
+    ) -> None: ...
+
+class GetNextTakingsResponse(_message.Message):
+    __slots__ = ("items",)
+    ITEMS_FIELD_NUMBER: _ClassVar[int]
+    items: _containers.RepeatedCompositeFieldContainer[GetNextTakingsResponseItem]
+    def __init__(self, items: _Optional[_Iterable[_Union[GetNextTakingsResponseItem, _Mapping]]] = ...) -> None: ...

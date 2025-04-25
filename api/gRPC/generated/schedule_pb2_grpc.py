@@ -2,7 +2,8 @@
 """Client and server classes corresponding to protobuf-defined services."""
 
 import grpc
-import schedule_pb2 as schedule__pb2
+
+from . import schedule_pb2 as schedule__pb2
 
 GRPC_GENERATED_VERSION = "1.71.0"
 GRPC_VERSION = grpc.__version__
@@ -52,6 +53,12 @@ class ScheduleServiceStub:
             response_deserializer=schedule__pb2.MakeScheduleResponse.FromString,
             _registered_method=True,
         )
+        self.GetNextTakings = channel.unary_unary(
+            "/schedule.ScheduleService/GetNextTakings",
+            request_serializer=schedule__pb2.GetNextTakingsRequest.SerializeToString,
+            response_deserializer=schedule__pb2.GetNextTakingsResponse.FromString,
+            _registered_method=True,
+        )
 
 
 class ScheduleServiceServicer:
@@ -75,6 +82,12 @@ class ScheduleServiceServicer:
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
+    def GetNextTakings(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
+
 
 def add_ScheduleServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -92,6 +105,11 @@ def add_ScheduleServiceServicer_to_server(servicer, server):
             servicer.MakeSchedule,
             request_deserializer=schedule__pb2.MakeScheduleRequest.FromString,
             response_serializer=schedule__pb2.MakeScheduleResponse.SerializeToString,
+        ),
+        "GetNextTakings": grpc.unary_unary_rpc_method_handler(
+            servicer.GetNextTakings,
+            request_deserializer=schedule__pb2.GetNextTakingsRequest.FromString,
+            response_serializer=schedule__pb2.GetNextTakingsResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler("schedule.ScheduleService", rpc_method_handlers)
@@ -182,6 +200,36 @@ class ScheduleService:
             "/schedule.ScheduleService/MakeSchedule",
             schedule__pb2.MakeScheduleRequest.SerializeToString,
             schedule__pb2.MakeScheduleResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True,
+        )
+
+    @staticmethod
+    def GetNextTakings(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            "/schedule.ScheduleService/GetNextTakings",
+            schedule__pb2.GetNextTakingsRequest.SerializeToString,
+            schedule__pb2.GetNextTakingsResponse.FromString,
             options,
             channel_credentials,
             insecure,

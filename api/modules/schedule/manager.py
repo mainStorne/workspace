@@ -45,10 +45,9 @@ class ScheduleManager(ModelManager):
             )
         return scheduled
 
-    async def next_takings(self, session: AsyncSession, user_id: str):
+    async def _next_takings(self, session: AsyncSession, user_id: str):
         start = datetime.now(tz=timezone.utc)
         stop = start + settings.NEXT_TAKINGS_PERIOD
-        scheduled = []
         schedules = await self.list(session, user_id=user_id)
         for schedule in schedules:
             schedule: Schedule
@@ -56,13 +55,18 @@ class ScheduleManager(ModelManager):
             for scheduled_datetime in crontab_range(start, stop, CronTab(schedule.intake_period)):
                 if scheduled_datetime > expired_datetime:
                     break
-                scheduled.append(
-                    TakingsRead.model_construct(
-                        medicine_name=schedule.medicine_name,
-                        medicine_datetime=scheduled_datetime,
-                        id=schedule.id,
-                    )
+                yield schedule, scheduled_datetime
+
+    async def next_takings(self, session: AsyncSession, user_id: str):
+        scheduled = []
+        async for schedule, scheduled_datetime in self._next_takings(session, user_id):
+            scheduled.append(
+                TakingsRead.model_construct(
+                    medicine_name=schedule.medicine_name,
+                    medicine_datetime=scheduled_datetime,
+                    id=schedule.id,
                 )
+            )
         return scheduled
 
 

@@ -9,6 +9,8 @@ service ScheduleService {
     rpc GetScheduleIds(GetScheduleIdsRequest) returns (GetScheduleIdsResponse);
 
     rpc MakeSchedule(MakeScheduleRequest) returns (MakeScheduleResponse);
+
+    rpc GetNextTakings(GetNextTakingsRequest) returns (GetNextTakingsResponse);
 }
 
 
@@ -17,7 +19,7 @@ message GetScheduleIdsRequest {
 }
 
 message GetScheduleIdsResponse {
-    repeated int64 id = 1;
+    repeated int64 ids = 1;
 
 }
 
@@ -35,7 +37,7 @@ message MakeScheduleResponseItem {
 }
 
 message MakeScheduleResponse {
-    repeated MakeScheduleResponseItem item = 1;
+    repeated MakeScheduleResponseItem items = 1;
 }
 
 message CreateScheduleRequest {
@@ -48,4 +50,19 @@ message CreateScheduleRequest {
 
 message CreateScheduleResponse {
     int32 id = 1;
+}
+
+
+message GetNextTakingsRequest {
+    int64 user_id = 1;
+}
+
+message GetNextTakingsResponseItem {
+    string medicine_name = 1;
+    string intake_period = 2;
+    int64 id = 3;
+}
+
+message GetNextTakingsResponse {
+    repeated GetNextTakingsResponseItem items = 1;
 }

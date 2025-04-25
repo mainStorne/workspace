@@ -9,7 +9,7 @@
         {
             "name": "API",
             "type": "debugpy",
-            "cwd": "${workspaceFolder}/api",
+            "cwd": "${workspaceFolder}",
             "request": "launch",
             "module": "uvicorn",
             "args": [

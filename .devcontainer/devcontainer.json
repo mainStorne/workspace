@@ -16,7 +16,7 @@
 	// "features": {},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [8080, 8002, 5432],
+	"forwardPorts": [8080, 8002, 5432, 50051],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "cd api && uv sync --group tests",
@@ -45,7 +45,9 @@
                 "bierner.docs-view",
                 "DavidAnson.vscode-markdownlint",
                 "wmaurer.vscode-jumpy",
-                "tumuerzunong.pycharm-like-snippets"
+                "tumuerzunong.pycharm-like-snippets",
+                "sankethdev.vscode-proto",
+                "Codeium.codeium"
             ]
 		}
 	},

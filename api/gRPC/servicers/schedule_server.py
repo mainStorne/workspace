@@ -13,9 +13,12 @@ from ...modules.schedule.schema import ScheduleCreate
 from ..generated.schedule_pb2 import (
     CreateScheduleRequest,
     CreateScheduleResponse,
+    GetNextTakingsRequest,
+    GetNextTakingsResponse,
+    GetScheduleIdsRequest,
+    GetScheduleIdsResponse,
     MakeScheduleRequest,
     MakeScheduleResponse,
-    MakeScheduleResponseItem,
 )
 from ..generated.schedule_pb2_grpc import ScheduleServiceServicer as _ScheduleServiceServicer
 
@@ -38,7 +41,7 @@ class ScheduleServiceServicer(_ScheduleServiceServicer):
         return CreateScheduleResponse(id=schedule.id)
 
     async def MakeSchedule(self, request: MakeScheduleRequest, context: ServicerContext):
-        items = []
+        response = MakeScheduleResponse()
         async with session_maker() as session:
             schedule: Schedule | None = await schedule_manager.get(
                 session, user_id=request.user_id, id=request.schedule_id
@@ -52,11 +55,25 @@ class ScheduleServiceServicer(_ScheduleServiceServicer):
             return await context.abort(grpc.StatusCode.ABORTED, "Schedule is expired")
 
         for scheduled_datetime in schedule_manager._schedule(schedule):
-            items.append(
-                MakeScheduleResponseItem(
-                    medicine_datetime=scheduled_datetime,
-                    medicine_name=schedule.medicine_name,
-                )
-            )
+            response.items.add(medicine_datetime=scheduled_datetime, medicine_name=schedule.medicine_name)
 
-        return MakeScheduleResponse(items)
+        return response
+
+    async def GetScheduleIds(self, request: GetScheduleIdsRequest, context):
+        response = GetScheduleIdsResponse()
+        async with session_maker() as session:
+            for schedule in await schedule_manager.list(session, user_id=request.user_id):
+                response.ids.append(schedule.id)
+
+        return response
+
+    async def GetNextTakings(self, request: GetNextTakingsRequest, context):
+        response = GetNextTakingsResponse()
+        async with session_maker() as session:
+            for schedule, scheduled_datetime in await schedule_manager._next_takings(session, user_id=request.user_id):
+                response.items.add(
+                    medicine_name=schedule.medicine_name,
+                    medicine_datetime=scheduled_datetime,
+                    id=schedule.id,
+                )
+        return response
