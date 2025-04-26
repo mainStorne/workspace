@@ -59,7 +59,7 @@ message GetNextTakingsRequest {
 
 message GetNextTakingsResponseItem {
     string medicine_name = 1;
-    string intake_period = 2;
+    google.protobuf.Timestamp medicine_datetime = 2;
     int64 id = 3;
 }
 

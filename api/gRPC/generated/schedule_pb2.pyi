@@ -65,14 +65,14 @@ class GetNextTakingsRequest(_message.Message):
     def __init__(self, user_id: _Optional[int] = ...) -> None: ...
 
 class GetNextTakingsResponseItem(_message.Message):
-    __slots__ = ("medicine_name", "intake_period", "id")
+    __slots__ = ("medicine_name", "medicine_datetime", "id")
     MEDICINE_NAME_FIELD_NUMBER: _ClassVar[int]
-    INTAKE_PERIOD_FIELD_NUMBER: _ClassVar[int]
+    MEDICINE_DATETIME_FIELD_NUMBER: _ClassVar[int]
     ID_FIELD_NUMBER: _ClassVar[int]
     medicine_name: str
-    intake_period: str
+    medicine_datetime: _timestamp_pb2.Timestamp
     id: int
-    def __init__(self, medicine_name: _Optional[str] = ..., intake_period: _Optional[str] = ..., id: _Optional[int] = ...) -> None: ...
+    def __init__(self, medicine_name: _Optional[str] = ..., medicine_datetime: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., id: _Optional[int] = ...) -> None: ...
 
 class GetNextTakingsResponse(_message.Message):
     __slots__ = ("items",)

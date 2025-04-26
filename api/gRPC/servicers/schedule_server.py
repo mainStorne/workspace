@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 import grpc
+from google.protobuf.timestamp_pb2 import Timestamp
 from grpc.aio import ServicerContext
 from pydantic import ValidationError
 
@@ -72,10 +73,12 @@ class ScheduleServiceServicer(_ScheduleServiceServicer):
     async def GetNextTakings(self, request: GetNextTakingsRequest, context):
         response = GetNextTakingsResponse()
         async with session_maker() as session:
-            for schedule, scheduled_datetime in await schedule_manager._next_takings(session, user_id=request.user_id):
+            async for schedule, scheduled_datetime in schedule_manager._next_takings(session, user_id=request.user_id):
+                timestamp = Timestamp()
+                timestamp.FromDatetime(scheduled_datetime)
                 response.items.add(
                     medicine_name=schedule.medicine_name,
-                    medicine_datetime=scheduled_datetime,
+                    medicine_datetime=timestamp,
                     id=schedule.id,
                 )
         return response
