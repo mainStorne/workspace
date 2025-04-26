@@ -1,0 +1,19 @@
+version: 1
+
+loggers:
+  uvicorn:
+    handlers: []
+    propagate: true
+
+  uvicorn.access:
+    handlers: []
+    propagate: false
+
+  uvicorn.error:
+    handlers: []
+    level: INFO
+    propagate: true
+
+  sqalchemy:
+    handlers: []
+    propagate: true

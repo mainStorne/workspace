@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+import structlog
 from fastapi import HTTPException, status
 
 from ...db import Schedule
@@ -9,6 +10,7 @@ from ...utils import to_openapi
 from .manager import schedule_manager
 from .schema import ScheduleCard, ScheduleCreate, ScheduleRead, TakingsRead
 
+log = structlog.get_logger()
 r = TraceRouter(tags=["Schedule"])
 
 
