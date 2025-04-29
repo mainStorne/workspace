@@ -18,16 +18,18 @@ class LoggingInterceptor(AsyncServerInterceptor):
 
         metadata = dict(metadata) if metadata else {}
         trace_id = metadata.get("X-TRACE-ID", str(uuid4()))
+        request_id = metadata.get("X-Request-Id", str(uuid4()))
         span_id = str(uuid4())
         structlog.contextvars.bind_contextvars(
             trace_id=trace_id,
             span_id=span_id,
-            request_id=metadata.get("X-Request-Id", str(uuid4())),
+            request_id=request_id,
             ip_address=context.peer().split(":")[1],
             user_agent=metadata.get("user-agent"),
         )
 
         await log.ainfo("Request")
+
         try:
             response = await method(request_or_iterator, context)
 
@@ -44,5 +46,8 @@ class LoggingInterceptor(AsyncServerInterceptor):
             process_time=time.perf_counter_ns() - start_time,
             body_size=response.ByteSize(),
         )
-
+        context.set_trailing_metadata((
+            ("x-trace-id", trace_id),
+            ("x-request-id", request_id),
+        ))
         return response

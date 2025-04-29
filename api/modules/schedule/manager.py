@@ -1,13 +1,18 @@
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from crontab import CronTab
 from fastapi_sqlalchemy_toolkit import ModelManager
 from sqlmodel.ext.asyncio.session import AsyncSession
+from structlog import get_logger
+from structlog.contextvars import bound_contextvars, get_contextvars
 
 from ...conf import settings
 from ...db import Schedule
 from .schema import ScheduleCard, TakingsRead
 from .utils import crontab_range
+
+log = get_logger()
 
 
 class ScheduleManager(ModelManager):
@@ -49,6 +54,10 @@ class ScheduleManager(ModelManager):
         start = datetime.now(tz=timezone.utc)
         stop = start + settings.NEXT_TAKINGS_PERIOD
         schedules = await self.list(session, user_id=user_id)
+        contextvars = get_contextvars()
+        parent_span_id = contextvars["span_id"]
+        with bound_contextvars(span_id=str(uuid4())):
+            await log.ainfo("Sent request to db", parent_span_id=parent_span_id)
         for schedule in schedules:
             schedule: Schedule
             expired_datetime = schedule.intake_finish if schedule.intake_finish else stop

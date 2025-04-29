@@ -6,7 +6,7 @@ from api.db import Schedule
 from api.gRPC.generated.schedule_pb2 import CreateScheduleRequest, GetScheduleIdsRequest
 from api.gRPC.generated.schedule_pb2_grpc import ScheduleServiceStub
 from api.gRPC.server import Server
-from api.gRPC.servicers.schedule_server import ScheduleServiceServicer
+from api.gRPC.servicers.schedule_servicer import ScheduleServiceServicer
 
 pytestmark = pytest.mark.anyio
 

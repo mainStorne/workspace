@@ -7,7 +7,7 @@ from fastapi import FastAPI
 
 from .filter_logging import filter_user_id_from_query_parameter
 from .gRPC.server import Server
-from .gRPC.servicers.schedule_server import ScheduleServiceServicer
+from .gRPC.servicers.schedule_servicer import ScheduleServiceServicer
 from .middlewares.logging_middleware import LoggingMiddleware
 from .modules import schedule
 
