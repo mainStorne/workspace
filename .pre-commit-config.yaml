@@ -22,4 +22,4 @@ repos:
       - id: ruff-format
         args: [--config=pyproject.toml]
 
-exclude: ^api/gRPC/generated/
+exclude: \S*generated

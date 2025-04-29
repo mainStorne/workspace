@@ -1,11 +1,15 @@
 import grpc
+from structlog import get_logger
 
 from .generated.schedule_pb2_grpc import ScheduleServiceServicer, add_ScheduleServiceServicer_to_server
+from .interceptors.logging_interceptor import LoggingInterceptor
+
+log = get_logger()
 
 
 class Server:
     def __init__(self, servicer: ScheduleServiceServicer, port: int):
-        self._server = grpc.aio.server()
+        self._server = grpc.aio.server(interceptors=[LoggingInterceptor()])
         add_ScheduleServiceServicer_to_server(servicer, self._server)
         self._server.add_insecure_port(f"[::]:{port}")
 
@@ -13,6 +17,7 @@ class Server:
         await self._server.wait_for_termination()
 
     async def start(self):
+        await log.ainfo("gRPC server is starting")
         await self._server.start()
 
     async def stop(self):

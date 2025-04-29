@@ -7,8 +7,6 @@ from pydantic import ValidationError
 
 from ...conf import session_maker
 from ...db import Schedule
-
-# from ..generated import  schedule_pb2_grpc
 from ...modules.schedule.manager import schedule_manager
 from ...modules.schedule.schema import ScheduleCreate
 from ..generated.schedule_pb2 import (

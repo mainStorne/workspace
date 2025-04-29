@@ -163,7 +163,7 @@ async def test_negative_duration():
 )
 async def test_schedule_period(schedule, client, session, schedules_count, monkeypatch):
     """
-    Пириод приема таблетков с 8:00 - 22:00
+    Период приема таблеток с 8:00 - 22:00
     #"""  # noqa: RUF002
 
     class MockDateTime:
