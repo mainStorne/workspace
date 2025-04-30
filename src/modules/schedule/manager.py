@@ -7,9 +7,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from structlog import get_logger
 from structlog.contextvars import bound_contextvars, get_contextvars
 
+from ...api.schemas.schema import ScheduleCard, TakingsRead
 from ...conf import settings
 from ...db import Schedule
-from .schema import ScheduleCard, TakingsRead
 from .utils import crontab_range
 
 log = get_logger()
@@ -61,7 +61,7 @@ class ScheduleManager(ModelManager):
         for schedule in schedules:
             schedule: Schedule
             expired_datetime = schedule.intake_finish if schedule.intake_finish else stop
-            for scheduled_datetime in crontab_range(start, stop, CronTab(schedule.intake_period)):
+            for scheduled_datetime in crontab_range(start, stop=stop, cron=CronTab(schedule.intake_period)):
                 if scheduled_datetime > expired_datetime:
                     break
                 yield schedule, scheduled_datetime

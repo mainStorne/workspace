@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from pydantic import ValidationError
 
-from api.db import Schedule
-from api.modules.schedule.schema import ScheduleCreate, TakingsRead
+from src.api.schemas.schema import ScheduleCreate, TakingsRead
+from src.db import Schedule
 
 pytestmark = pytest.mark.anyio
 

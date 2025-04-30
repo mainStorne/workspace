@@ -1,15 +1,16 @@
-import asyncio
 import logging
 from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI
 
+from src.api.endpoints import schedule
+
+# from src.grpc.server import Server
+# from src.grpc.servicers.schedule_servicer import ScheduleServiceServicer
+from src.api.middlewares.logging_middleware import LoggingMiddleware
+
 from .filter_logging import filter_user_id_from_query_parameter
-from .gRPC.server import Server
-from .gRPC.servicers.schedule_servicer import ScheduleServiceServicer
-from .middlewares.logging_middleware import LoggingMiddleware
-from .modules import schedule
 
 shared_processors = [
     structlog.processors.add_log_level,
@@ -42,11 +43,11 @@ root_logger.setLevel(logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    server = Server(ScheduleServiceServicer(), 50051)
-    await server.start()
-    asyncio.create_task(server.wait_for_termination())  # noqa: RUF006
+    # server = Server(ScheduleServiceServicer(), 50051)
+    # await server.start()
+    # asyncio.create_task(server.wait_for_termination())
     yield
-    await server.stop()
+    # await server.stop()
 
 
 app = FastAPI(lifespan=lifespan)

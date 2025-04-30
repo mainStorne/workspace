@@ -40,7 +40,6 @@ dependencies = [
 dev = [
     "pytest>=7.2.0",
     "httpx>=0.28.1",
-    "pre-commit>=4.1.0",
 ]
 
 
@@ -48,7 +47,6 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# asyncio_mode = "auto"
 
 [tool.ruff]
 target-version = "py39"
@@ -87,6 +85,7 @@ select = [
     "RUF",
     # tryceratops
     "TRY",
+    "F401",
 ]
 ignore = [
     # LineTooLong
@@ -97,6 +96,3 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]
-
-[tool.ruff.format]
-preview = true

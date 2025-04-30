@@ -1,14 +1,15 @@
 from datetime import datetime, timezone
 
-import grpc
 from google.protobuf.timestamp_pb2 import Timestamp
-from grpc.aio import ServicerContext
 from pydantic import ValidationError
 
+import grpc
+from grpc.aio import ServicerContext
+
+from ...api.schemas.schema import ScheduleCreate
 from ...conf import session_maker
 from ...db import Schedule
 from ...modules.schedule.manager import schedule_manager
-from ...modules.schedule.schema import ScheduleCreate
 from ..generated.schedule_pb2 import (
     CreateScheduleRequest,
     CreateScheduleResponse,

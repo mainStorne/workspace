@@ -1,11 +1,12 @@
 import time
 from uuid import uuid4
 
-import grpc
 import structlog
 from grpc_interceptor import AsyncServerInterceptor
 from structlog import get_logger
 from structlog.stdlib import BoundLogger
+
+import grpc
 
 log: BoundLogger = get_logger()
 
@@ -46,8 +47,10 @@ class LoggingInterceptor(AsyncServerInterceptor):
             process_time=time.perf_counter_ns() - start_time,
             body_size=response.ByteSize(),
         )
-        context.set_trailing_metadata((
-            ("x-trace-id", trace_id),
-            ("x-request-id", request_id),
-        ))
+        context.set_trailing_metadata(
+            (
+                ("x-trace-id", trace_id),
+                ("x-request-id", request_id),
+            )
+        )
         return response

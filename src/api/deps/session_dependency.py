@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from .conf import session_maker
+from src.conf import session_maker
 
 
 async def get_session():
@@ -11,4 +11,4 @@ async def get_session():
         yield session
 
 
-Session = Annotated[AsyncSession, Depends(get_session)]
+GetSession = Annotated[AsyncSession, Depends(get_session)]

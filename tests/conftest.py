@@ -9,10 +9,10 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from api import app
-from api.conf import engine
-from api.db import Schedule, SQLModel
-from api.deps import get_session
+from src import app
+from src.conf import engine
+from src.db import Schedule, SQLModel
+from src.deps import get_session
 
 pytestmark = pytest.mark.anyio
 
