@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 from crontab import CronTab
 from sqlalchemy.exc import MultipleResultsFound
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from structlog import get_logger
+from structlog.contextvars import bound_contextvars, get_contextvars
 
-from src.api.schemas.schema import ScheduleCard
 from src.db import Schedule
 
 log = get_logger()
@@ -18,6 +19,22 @@ class IScheduleService(ABC):
         self._session = session
         super().__init__()
 
+    @abstractmethod
+    def schedule(self, schedule_in: Schedule):
+        pass
+
+    @abstractmethod
+    async def get(self, user_id: int, schedule_id: int): ...
+
+    @abstractmethod
+    async def next_takings(self, user_id: int, start: datetime, stop: datetime): ...
+
+    @abstractmethod
+    async def schedules(self, user_id: int):
+        pass
+
+
+class ScheduleService(IScheduleService):
     @staticmethod
     def crontab_range(start: datetime, stop: datetime, cron: CronTab):
         while True:
@@ -52,17 +69,10 @@ class IScheduleService(ABC):
             year=now.year, month=now.month, day=now.day, hour=22, minute=0, second=0, microsecond=0, tzinfo=timezone.utc
         )
         expired_datetime = schedule_in.intake_finish if schedule_in.intake_finish else stop
-        results = []
         for scheduled_datetime in self.crontab_range(start, stop, CronTab(schedule_in.intake_period)):
             if scheduled_datetime > expired_datetime:
                 return
-            results.append(self.view(schedule_in, scheduled_datetime))
-
-        return results
-
-    @abstractmethod
-    def view(self, schedule_in: Schedule, scheduled_datetime):
-        pass
+            yield schedule_in, scheduled_datetime
 
     async def get(self, user_id: int, schedule_id: int):
         try:
@@ -74,9 +84,19 @@ class IScheduleService(ABC):
             await log.awarning("Multiple results returned from get schedule", schedule_id=schedule_id, user_id=user_id)
             return result.first()
 
+    async def schedules(self, user_id):
+        return await self._session.exec(select(Schedule).where(Schedule.user_id == user_id))
 
-class ScheduleServiceHTTP(IScheduleService):
-    def view(self, schedule_in, scheduled_datetime):
-        return ScheduleCard.model_construct(
-            medicine_name=schedule_in.medicine_name, medicine_datetime=scheduled_datetime
-        )
+    async def next_takings(self, user_id: int, start: datetime, stop: datetime):
+        schedules = await self.schedules(user_id)
+        contextvars = get_contextvars()
+        parent_span_id = contextvars["span_id"]
+        with bound_contextvars(span_id=str(uuid4())):
+            await log.ainfo("Sent request to db", parent_span_id=parent_span_id)
+        for schedule in schedules:
+            schedule: Schedule
+            expired_datetime = schedule.intake_finish if schedule.intake_finish else stop
+            for scheduled_datetime in self.crontab_range(start, stop, CronTab(schedule.intake_period)):
+                if scheduled_datetime > expired_datetime:
+                    break
+                yield schedule, scheduled_datetime
