@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -9,6 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from structlog import get_logger
 from structlog.contextvars import bound_contextvars, get_contextvars
 
+from src.api.schemas.schema import ScheduleCreate
 from src.db import Schedule
 
 log = get_logger()
@@ -30,7 +32,11 @@ class IScheduleService(ABC):
     async def next_takings(self, user_id: int, start: datetime, stop: datetime): ...
 
     @abstractmethod
-    async def schedules(self, user_id: int):
+    async def schedules(self, user_id: int) -> Iterable[Schedule]:
+        pass
+
+    @abstractmethod
+    async def create(self, schedule: ScheduleCreate):
         pass
 
 
@@ -85,10 +91,10 @@ class ScheduleService(IScheduleService):
             return result.first()
 
     async def schedules(self, user_id):
-        return await self._session.exec(select(Schedule).where(Schedule.user_id == user_id))
+        return await self._session.exec(select(Schedule.id).where(Schedule.user_id == user_id))
 
     async def next_takings(self, user_id: int, start: datetime, stop: datetime):
-        schedules = await self.schedules(user_id)
+        schedules = await self._session.exec(select(Schedule).where(Schedule.user_id == user_id))
         contextvars = get_contextvars()
         parent_span_id = contextvars["span_id"]
         with bound_contextvars(span_id=str(uuid4())):
@@ -100,3 +106,9 @@ class ScheduleService(IScheduleService):
                 if scheduled_datetime > expired_datetime:
                     break
                 yield schedule, scheduled_datetime
+
+    async def create(self, schedule):
+        schedule = Schedule(**schedule.model_dump())
+        self._session.add(schedule)
+        await self._session.commit()
+        return schedule.id

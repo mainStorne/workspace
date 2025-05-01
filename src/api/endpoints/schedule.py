@@ -5,18 +5,16 @@ from src.repositories.schedule_repository import ScheduleExpiredException, Sched
 
 from ..deps.schedule_dependency import ScheduleRepositoryDependency
 from ..routers.trace_router import TraceRouter
-from ..schemas.schema import ScheduleCard, ScheduleRead, TakingsRead
+from ..schemas.schema import ScheduleCard, ScheduleCreate, ScheduleRead, TakingsRead
 
 log = structlog.get_logger()
 r = TraceRouter(tags=["Schedule"])
 
 
-# @r.post("/schedule", response_model=ScheduleRead)
-# async def create(session: Session, schedule: ScheduleCreate):
-#     schedule_db = Schedule(**schedule.model_dump())
-#     session.add(schedule_db)
-#     await session.commit()
-#     return ScheduleRead(id=schedule_db.id)
+@r.post("/schedule", response_model=ScheduleRead)
+async def create(schedule_repository: ScheduleRepositoryDependency, schedule: ScheduleCreate):
+    schedule_id = await schedule_repository.create(schedule=schedule)
+    return {"id": schedule_id}
 
 
 ScheduleExpired = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="")
@@ -53,7 +51,10 @@ async def schedules(user_id: int, schedule_repository: ScheduleRepositoryDepende
     графиком приёмов на день
     """  # noqa: RUF002
     # TODO: add new table users and link users to schedules. Change id to UUID type. Handle user not found error
-    return await schedule_repository.schedules(user_id)
+    response = []
+    for schedule in await schedule_repository.schedules(user_id):
+        response.append({"id": schedule})
+    return response
 
 
 @r.get("/next_takings", response_model=list[TakingsRead])

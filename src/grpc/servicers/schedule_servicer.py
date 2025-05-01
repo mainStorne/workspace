@@ -5,11 +5,9 @@ from pydantic import ValidationError
 
 import grpc
 from grpc.aio import ServicerContext
+from src.repositories.schedule_repository import ScheduleExpiredException, ScheduleNotFoundException, ScheduleRepository
 
 from ...api.schemas.schema import ScheduleCreate
-from ...conf import session_maker
-from ...db import Schedule
-from ...modules.schedule.manager import schedule_manager
 from ..generated.schedule_pb2 import (
     CreateScheduleRequest,
     CreateScheduleResponse,
@@ -21,10 +19,14 @@ from ..generated.schedule_pb2 import (
     MakeScheduleResponse,
 )
 from ..generated.schedule_pb2_grpc import ScheduleServiceServicer as _ScheduleServiceServicer
+from ..injections.schedule_inject import schedule_inject
 
 
 class ScheduleServiceServicer(_ScheduleServiceServicer):
-    async def CreateSchedule(self, request: CreateScheduleRequest, context: ServicerContext):
+    @schedule_inject
+    async def CreateSchedule(
+        self, request: CreateScheduleRequest, context: ServicerContext, schedule_repository: ScheduleRepository
+    ):
         try:
             schedule = ScheduleCreate(
                 medicine_name=request.medicine_name,
@@ -36,48 +38,43 @@ class ScheduleServiceServicer(_ScheduleServiceServicer):
             )
         except ValidationError:
             return await context.abort(grpc.StatusCode.ABORTED, "Validation error")
-        async with session_maker() as session:
-            schedule = Schedule(**schedule.model_dump())
-            session.add(schedule)
-            await session.commit()
-        return CreateScheduleResponse(id=schedule.id)
 
-    async def MakeSchedule(self, request: MakeScheduleRequest, context: ServicerContext):
+        schedule_id = await schedule_repository.create(schedule)
+        return CreateScheduleResponse(id=schedule_id)
+
+    @schedule_inject
+    async def MakeSchedule(
+        self, request: MakeScheduleRequest, context: ServicerContext, schedule_repository: ScheduleRepository
+    ):
         response = MakeScheduleResponse()
-        async with session_maker() as session:
-            schedule: Schedule | None = await schedule_manager.get(
-                session, user_id=request.user_id, id=request.schedule_id
-            )
-
-        if not schedule:
+        try:
+            schedule_gen = await schedule_repository.schedule(request.user_id, request.schedule_id)
+        except ScheduleNotFoundException:
             return await context.abort(grpc.StatusCode.NOT_FOUND)
-
-        # test for expired
-        if schedule.intake_finish and schedule.intake_finish < datetime.now(tz=timezone.utc):
+        except ScheduleExpiredException:
             return await context.abort(grpc.StatusCode.ABORTED, "Schedule is expired")
 
-        for scheduled_datetime in schedule_manager._schedule(schedule):
+        for schedule, scheduled_datetime in schedule_gen:
             response.items.add(medicine_datetime=scheduled_datetime, medicine_name=schedule.medicine_name)
-
         return response
 
-    async def GetScheduleIds(self, request: GetScheduleIdsRequest, context):
+    @schedule_inject
+    async def GetScheduleIds(self, request: GetScheduleIdsRequest, context, schedule_repository: ScheduleRepository):
         response = GetScheduleIdsResponse()
-        async with session_maker() as session:
-            for schedule in await schedule_manager.list(session, user_id=request.user_id):
-                response.ids.append(schedule.id)
+        for schedule_id in await schedule_repository.schedules(request.user_id):
+            response.ids.append(schedule_id)
 
         return response
 
-    async def GetNextTakings(self, request: GetNextTakingsRequest, context):
+    @schedule_inject
+    async def GetNextTakings(self, request: GetNextTakingsRequest, context, schedule_repository: ScheduleRepository):
         response = GetNextTakingsResponse()
-        async with session_maker() as session:
-            async for schedule, scheduled_datetime in schedule_manager._next_takings(session, user_id=request.user_id):
-                timestamp = Timestamp()
-                timestamp.FromDatetime(scheduled_datetime)
-                response.items.add(
-                    medicine_name=schedule.medicine_name,
-                    medicine_datetime=timestamp,
-                    id=schedule.id,
-                )
+        async for schedule, scheduled_datetime in await schedule_repository.next_takings(user_id=request.user_id):
+            timestamp = Timestamp()
+            timestamp.FromDatetime(scheduled_datetime)
+            response.items.add(
+                medicine_name=schedule.medicine_name,
+                medicine_datetime=timestamp,
+                id=schedule.id,
+            )
         return response

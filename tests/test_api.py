@@ -12,7 +12,7 @@ now = datetime.now(tz=timezone.utc)
 intake_start = datetime(year=now.year, month=now.month, day=now.day, hour=0, tzinfo=timezone.utc)
 
 
-def assert_scheduled(scheduled: datetime):
+def assert_schedule(scheduled: datetime):
     assert 8 <= scheduled.hour <= 22
     if scheduled.hour == 22:
         assert scheduled.second == 0 and scheduled.minute == 0
@@ -20,13 +20,6 @@ def assert_scheduled(scheduled: datetime):
 
 
 async def test_create_schedule(client, session):
-    schedule = ScheduleCreate(
-        medicine_name="name",
-        intake_period="12",
-        intake_finish=intake_start + timedelta(days=5),
-        user_id=2,
-        intake_start=intake_start,
-    )
     # create json so because schedule schema created intake_period in full form of cron syntax during initialization
     response = await client.post(
         "/schedule",
@@ -281,4 +274,4 @@ async def test_next_takings(schedule, client, session, monkeypatch, schedules_co
     assert len(response_json) == schedules_count
     for raw in response_json:
         scheduled = TakingsRead.model_validate(raw)
-        assert_scheduled(scheduled.medicine_datetime)
+        assert_schedule(scheduled.medicine_datetime)

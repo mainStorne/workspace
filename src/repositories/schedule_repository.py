@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from structlog import get_logger
 
+from src.api.schemas.schema import ScheduleCreate
 from src.conf import settings
 from src.services.schedule_service import IScheduleService
 
@@ -39,3 +40,6 @@ class ScheduleRepository:
 
     async def schedules(self, user_id: int):
         return await self._schedule_service.schedules(user_id)
+
+    async def create(self, schedule: ScheduleCreate):
+        return await self._schedule_service.create(schedule)
