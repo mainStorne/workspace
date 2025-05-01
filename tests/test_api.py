@@ -1,15 +1,19 @@
 from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock
 
 import pytest
+from fastapi import Depends
+from freezegun import freeze_time
 from pydantic import ValidationError
 
+from src import app
+from src.api.deps.schedule_dependency import ScheduleRepository, get_schedule_repository, get_schedule_service
 from src.api.schemas.schema import ScheduleCreate, TakingsRead
 from src.db import Schedule
 
 pytestmark = pytest.mark.anyio
 
-now = datetime.now(tz=timezone.utc)
-intake_start = datetime(year=now.year, month=now.month, day=now.day, hour=0, tzinfo=timezone.utc)
+intake_start = datetime(year=2025, month=3, day=13, hour=0, tzinfo=timezone.utc)
 
 
 def assert_schedule(scheduled: datetime):
@@ -19,16 +23,20 @@ def assert_schedule(scheduled: datetime):
     assert scheduled.minute % 15 == 0
 
 
-async def test_create_schedule(client, session):
-    # create json so because schedule schema created intake_period in full form of cron syntax during initialization
+# @freeze_time(intake_start)
+async def test_create_schedule(client, session, monkeypatch):
+    mock_datetime = MagicMock(spec=datetime, autospec=True, _eat_self=True)
+    mock_datetime.now.return_value = intake_start
+    # TODO problem with patching datetime object because pydantic doesn't have definition how to work with Mock type
+    monkeypatch.setattr("src.api.schemas.schema.datetime", mock_datetime)
+    intake_finish = (intake_start + timedelta(days=3)).isoformat()
     response = await client.post(
         "/schedule",
         json={
             "intake_period": "12",
             "medicine_name": "name",
             "user_id": 2,
-            "intake_start": intake_start.isoformat(),
-            "intake_finish": (intake_start + timedelta(days=3)).isoformat(),
+            "intake_finish": intake_finish,
         },
     )
     assert response.status_code == 200
@@ -41,6 +49,9 @@ async def test_create_schedule(client, session):
     "cron",
     [
         "23",  # intake period in 8 or 22 hours
+        "24",
+        "7",
+        "5",
     ],
 )
 async def test_wrong_schedules(cron):
@@ -59,6 +70,7 @@ async def test_negative_duration():
         )
 
 
+@freeze_time(intake_start)
 @pytest.mark.parametrize(
     "schedule,schedules_count",
     [
@@ -156,17 +168,9 @@ async def test_negative_duration():
 )
 async def test_schedule_period(schedule, client, session, schedules_count, monkeypatch):
     """
-    Период приема таблеток с 8:00 - 22:00
-    #"""  # noqa: RUF002
+    Тестирование выдачи приема таблеток с 8:00 - 22:00
+    """  # noqa: RUF002
 
-    class MockDateTime:
-        @classmethod
-        def now(cls, tz=None):
-            return datetime(
-                year=intake_start.year, month=intake_start.month, day=intake_start.day, hour=0, tzinfo=timezone.utc
-            )
-
-    monkeypatch.setattr("api.modules.schedule.datetime", MockDateTime)
     session.add(schedule)
     await session.commit()
     response = await client.get("/schedule", params={"user_id": schedule.user_id, "schedule_id": schedule.id})
@@ -174,15 +178,14 @@ async def test_schedule_period(schedule, client, session, schedules_count, monke
     assert len(response.json()) == schedules_count
 
 
-async def test_expired_exception(schedule, client, monkeypatch):
-    class MockDateTime:
-        @classmethod
-        def now(cls, tz=None):
-            return schedule.intake_finish + timedelta(days=1)
-
-    monkeypatch.setattr("api.modules.schedule.datetime", MockDateTime)
-    response = await client.get("/schedule", params={"user_id": schedule.user_id, "schedule_id": schedule.id})
-    assert response.status_code == 400
+@pytest.mark.parametrize("time_to_freeze", ["2025-03-14 00:00:00", "2025-03-15 12:00:00", "2026-03-15 12:00:00"])
+async def test_expired_exception(schedule, client, time_to_freeze):
+    """
+    Тестирование ответа по запросу на истекшее расписание таблеток
+    """
+    with freeze_time(time_to_freeze):
+        response = await client.get("/schedule", params={"user_id": schedule.user_id, "schedule_id": schedule.id})
+        assert response.status_code == 400
 
 
 async def test_constantly(schedule, client, monkeypatch, session):
@@ -193,6 +196,7 @@ async def test_constantly(schedule, client, monkeypatch, session):
     assert response.status_code == 200
 
 
+@freeze_time(intake_start)
 @pytest.mark.parametrize(
     "schedule,schedules_count,days",
     [
@@ -254,17 +258,10 @@ async def test_constantly(schedule, client, monkeypatch, session):
     ],
 )
 async def test_next_takings(schedule, client, session, monkeypatch, schedules_count, days):
-    class MockSettings:
-        NEXT_TAKINGS_PERIOD = timedelta(days=days)
+    async def mock_schedule_repository(schedule_service=Depends(get_schedule_service)):  # noqa: B008
+        return ScheduleRepository(schedule_service, timedelta(days=days))
 
-    monkeypatch.setattr("api.modules.schedule.manager.settings", MockSettings)
-
-    class MockDateTime:
-        @classmethod
-        def now(cls, tz=None):
-            return intake_start
-
-    monkeypatch.setattr("api.modules.schedule.manager.datetime", MockDateTime)
+    app.dependency_overrides[get_schedule_repository] = mock_schedule_repository
 
     session.add(schedule)
     await session.commit()

@@ -1,23 +1,21 @@
-from os import environ  # noqa: ignore
-
-environ["POSTGRES_DB"] = "test"  # noqa: ignore
-
-
 from datetime import datetime, timedelta, timezone
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import NullPool
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src import app
-from src.conf import engine
-from src.db import Schedule, SQLModel
-from src.deps import get_session
+from src.api.deps.session_dependency import get_session
+from src.conf import settings
+from src.db import Schedule
 
 pytestmark = pytest.mark.anyio
-
-now = datetime.now(tz=timezone.utc)
-intake_start = datetime(year=now.year, month=now.month, day=now.day, hour=0, tzinfo=timezone.utc)
+engine = create_async_engine(settings.database.sqlalchemy_url, plugins=["geoalchemy2"], poolclass=NullPool)
+session_maker = async_sessionmaker(
+    bind=engine, expire_on_commit=False, join_transaction_mode="create_savepoint", class_=AsyncSession
+)
 
 
 @pytest.fixture()
@@ -26,52 +24,29 @@ async def client():
         yield cli
 
 
-@pytest.fixture()
-async def connection():
-    async with engine.connect() as conn:
-        yield conn
-
-
 @pytest.fixture(scope="session")
 def anyio_backend():
     return "asyncio"
 
 
-@pytest.fixture(scope="session", autouse=True)
-async def create_test_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-    yield
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.drop_all)
-
-
-@pytest.fixture()
-async def transaction(connection):
-    async with connection.begin() as trans:
-        yield trans
-
-
 @pytest.fixture(autouse=True)
-async def session(connection, transaction):
-    async_session = AsyncSession(
-        bind=connection,
-        join_transaction_mode="create_savepoint",
-        expire_on_commit=False,
-    )
-    async with async_session as session:
+async def session():
+    async with engine.connect() as connection, connection.begin() as transaction:
+        session = AsyncSession(bind=connection, expire_on_commit=False, join_transaction_mode="create_savepoint")
 
-        async def inner():
-            return session
+        async def mock_get_session():
+            async with session as s:
+                yield s
 
-        app.dependency_overrides[get_session] = inner
-        yield session
-
-    await transaction.rollback()
+        app.dependency_overrides[get_session] = mock_get_session
+        async with session as s:
+            yield s
+        await transaction.rollback()
 
 
 @pytest.fixture()
 async def schedule(session):
+    intake_start = datetime(year=2025, month=3, day=13, hour=0, tzinfo=timezone.utc)
     _schedule = Schedule(
         medicine_name="test",
         intake_period="8 12 * * *",

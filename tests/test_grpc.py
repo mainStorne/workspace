@@ -3,10 +3,10 @@ from pytest import fixture
 
 import grpc
 from src.db import Schedule
-from src.gRPC.generated.schedule_pb2 import CreateScheduleRequest, GetScheduleIdsRequest
-from src.gRPC.generated.schedule_pb2_grpc import ScheduleServiceStub
-from src.gRPC.server import Server
-from src.gRPC.servicers.schedule_servicer import ScheduleServiceServicer
+from src.grpc.generated.schedule_pb2 import CreateScheduleRequest, GetScheduleIdsRequest
+from src.grpc.generated.schedule_pb2_grpc import ScheduleServiceStub
+from src.grpc.server import Server
+from src.grpc.servicers.schedule_servicer import ScheduleServiceServicer
 
 pytestmark = pytest.mark.anyio
 
