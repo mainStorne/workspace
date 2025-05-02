@@ -15,6 +15,7 @@
 Для периодичности в один раз в день достаточно будет указать час приёма **12**
 
 ## Пример запроса
+
     curl -X 'POST' \
     'http://localhost/schedule' \
     -H 'accept: application/json' \
@@ -22,18 +23,6 @@
     -d '{
     "medicine_name": "string",
     "intake_period": "*",
-    "user_id": 0,
-    "intake_finish": "2025-10-01T13:34:55.595Z"
-    }'
-
-## Пример запроса
-    curl -X 'POST' \
-    'http://localhost/schedule' \
-    -H 'accept: application/json' \
-    -H 'Content-Type: application/json' \
-    -d '{
-    "medicine_name": "string",
-    "intake_period": "0 * * * Mon",
     "user_id": 0,
     "intake_finish": "2025-10-01T13:34:55.595Z"
     }'
