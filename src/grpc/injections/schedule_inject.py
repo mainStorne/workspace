@@ -1,7 +1,6 @@
 from functools import wraps
 
-from src import settings
-from src.conf import session_maker
+from src.conf import session_maker, settings
 from src.repositories.schedule_repository import ScheduleRepository
 from src.services.schedule_service import ScheduleService
 

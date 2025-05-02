@@ -1,11 +1,11 @@
 import structlog
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 
 from src.repositories.schedule_repository import ScheduleExpiredException, ScheduleNotFoundException
 
 from ..deps.schedule_dependency import ScheduleRepositoryDependency
 from ..routers.trace_router import TraceRouter
-from ..schemas.schema import ScheduleCard, ScheduleCreate, ScheduleRead, TakingsRead
+from ..schemas.schedule_schema import ScheduleCard, ScheduleCreate, ScheduleRead, TakingsRead
 
 log = structlog.get_logger()
 r = TraceRouter(tags=["Schedule"])
@@ -15,9 +15,6 @@ r = TraceRouter(tags=["Schedule"])
 async def create(schedule_repository: ScheduleRepositoryDependency, schedule: ScheduleCreate):
     schedule_id = await schedule_repository.create(schedule=schedule)
     return {"id": schedule_id}
-
-
-ScheduleExpired = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="")
 
 
 @r.get(

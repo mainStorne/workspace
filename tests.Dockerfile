@@ -26,7 +26,12 @@ RUN --mount=from=uv,source=/uv,target=/bin/uv \
 FROM base AS runner
 COPY --from=builder ${VENV_PATH} ${VENV_PATH}
 ENV PORT=8080
-COPY api api
+COPY src src
 COPY tests tests
+COPY alembic.sh .
+COPY alembic.ini .
 
-ENTRYPOINT ["/bin/sh", "-c", "pytest"]
+RUN chmod +x alembic.sh
+
+ENTRYPOINT [ "/app/alembic.sh" ]
+CMD pytest --cov=.

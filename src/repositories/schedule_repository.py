@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 from structlog import get_logger
 
-from src.api.schemas.schema import ScheduleCreate
+from src.api.schemas.schedule_schema import ScheduleCreate
 from src.services.schedule_service import IScheduleService
 
 log = get_logger()

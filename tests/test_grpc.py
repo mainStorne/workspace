@@ -1,12 +1,23 @@
+from datetime import timedelta
+from unittest.mock import MagicMock
+
 import pytest
+from freezegun import freeze_time
 from pytest import fixture
 
 import grpc
 from src.db import Schedule
-from src.grpc.generated.schedule_pb2 import CreateScheduleRequest, GetScheduleIdsRequest
+from src.grpc.generated.schedule_pb2 import (
+    CreateScheduleRequest,
+    GetNextTakingsRequest,
+    GetScheduleIdsRequest,
+    MakeScheduleRequest,
+)
 from src.grpc.generated.schedule_pb2_grpc import ScheduleServiceStub
 from src.grpc.server import Server
 from src.grpc.servicers.schedule_servicer import ScheduleServiceServicer
+
+from .utils import intake_start
 
 pytestmark = pytest.mark.anyio
 
@@ -17,6 +28,13 @@ async def server():
     await s.start()
     yield
     await s.stop()
+
+
+@fixture(autouse=True)
+async def patch_session(session, monkeypatch):
+    maker = MagicMock()
+    maker.return_value.__aenter__.return_value = session
+    monkeypatch.setattr("src.grpc.injections.schedule_inject.session_maker", maker)
 
 
 @fixture()
@@ -34,8 +52,85 @@ async def test_create_schedule(stub, session):
     assert await session.get(Schedule, response.id) is not None
 
 
-@pytest.mark.skip
-async def test_get_schedule_ids(stub, schedule):
+async def test_get_schedule_ids(stub, schedule, session):
     response = await stub.GetScheduleIds(GetScheduleIdsRequest(user_id=schedule.user_id))
-    # TODO fix why this is not working
     assert response.ids == [schedule.id]
+
+
+@freeze_time(intake_start)
+async def test_make_schedule(stub, schedule):
+    response = await stub.MakeSchedule(MakeScheduleRequest(user_id=schedule.user_id, schedule_id=schedule.id))
+    assert len(response.items) == 1
+
+
+@freeze_time(intake_start)
+@pytest.mark.parametrize(
+    "schedule_model,schedules_count,days",
+    [
+        (
+            Schedule(
+                intake_period="10 */6 * * *",
+                medicine_name="",
+                intake_finish=None,
+                user_id=1,
+                intake_start=intake_start,
+            ),
+            16,
+            timedelta(8),
+        ),
+        (
+            Schedule(
+                intake_period="0 */8 * * *",
+                medicine_name="",
+                intake_finish=None,
+                user_id=1,
+                intake_start=intake_start,
+            ),
+            12,
+            timedelta(6),
+        ),
+        (
+            Schedule(
+                intake_period="0 */8 * * *",
+                medicine_name="",
+                intake_finish=intake_start + timedelta(days=3),
+                user_id=1,
+                intake_start=intake_start - timedelta(days=1),
+            ),
+            6,
+            timedelta(6),
+        ),
+        (
+            Schedule(
+                intake_period="0 */8 * * *",
+                medicine_name="",
+                intake_start=intake_start,
+                intake_finish=intake_start + timedelta(days=3, hours=22),
+                user_id=1,
+            ),
+            8,
+            timedelta(6),
+        ),
+        (
+            Schedule(
+                intake_period="0 */8 * * *",
+                medicine_name="",
+                intake_start=intake_start,
+                intake_finish=intake_start + timedelta(days=3),
+                user_id=1,
+            ),
+            6,
+            timedelta(6),
+        ),
+    ],
+)
+async def test_next_takings(stub, schedule_model, session, schedules_count, days, monkeypatch):
+    settings_mock = MagicMock()
+    settings_mock.NEXT_TAKINGS_PERIOD = days
+    monkeypatch.setattr("src.grpc.injections.schedule_inject.settings", settings_mock)
+
+    schedule = schedule_model
+    session.add(schedule)
+    await session.commit()
+    response = await stub.GetNextTakings(GetNextTakingsRequest(user_id=schedule.user_id))
+    assert len(response.items) == schedules_count

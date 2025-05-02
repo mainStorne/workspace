@@ -7,7 +7,7 @@ import grpc
 from grpc.aio import ServicerContext
 from src.repositories.schedule_repository import ScheduleExpiredException, ScheduleNotFoundException, ScheduleRepository
 
-from ...api.schemas.schema import ScheduleCreate
+from ...api.schemas.schedule_schema import ScheduleCreate
 from ..generated.schedule_pb2 import (
     CreateScheduleRequest,
     CreateScheduleResponse,

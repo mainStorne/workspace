@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -11,7 +11,10 @@ from src.api.deps.session_dependency import get_session
 from src.conf import settings
 from src.db import Schedule
 
+from .utils import intake_start
+
 pytestmark = pytest.mark.anyio
+settings.database.db = "test"
 engine = create_async_engine(settings.database.sqlalchemy_url, plugins=["geoalchemy2"], poolclass=NullPool)
 session_maker = async_sessionmaker(
     bind=engine, expire_on_commit=False, join_transaction_mode="create_savepoint", class_=AsyncSession
@@ -46,7 +49,6 @@ async def session():
 
 @pytest.fixture()
 async def schedule(session):
-    intake_start = datetime(year=2025, month=3, day=13, hour=0, tzinfo=timezone.utc)
     _schedule = Schedule(
         medicine_name="test",
         intake_period="8 12 * * *",

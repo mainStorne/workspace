@@ -10,7 +10,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from structlog import get_logger
 from structlog.contextvars import bound_contextvars, get_contextvars
 
-from src.api.schemas.schema import ScheduleCreate
+from src.api.schemas.schedule_schema import ScheduleCreate
 from src.db import Schedule
 
 log = get_logger()
