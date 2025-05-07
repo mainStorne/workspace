@@ -1,6 +1,7 @@
-from datetime import timedelta
+from datetime import time, timedelta
+from functools import lru_cache
 
-from pydantic import Field, PostgresDsn
+from pydantic import Field, PostgresDsn, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,7 +27,21 @@ class DatabaseSettings(BaseSettings):
         )
 
 
-class Settings(BaseSettings):
+class EnvSettings(BaseSettings):
     model_config = SettingsConfigDict(extra="allow")
-    NEXT_TAKINGS_PERIOD: timedelta
+    next_takings_period: timedelta = Field(validation_alias="NEXT_TAKINGS_PERIOD")
+    schedule_lowest_bound: time = time(hour=8)
+    schedule_highest_bound: time = time(hour=22)
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
+
+    @model_validator(mode="after")
+    def validate_bounds(self):
+        if self.schedule_lowest_bound > self.schedule_highest_bound:
+            raise ValueError("lowest bound must be lowest!")  # noqa: TRY003
+
+        return self
+
+
+@lru_cache
+def get_env_settings() -> EnvSettings:
+    return EnvSettings()

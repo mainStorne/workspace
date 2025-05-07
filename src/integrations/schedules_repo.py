@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from uuid import uuid4
 
 from crontab import CronTab
@@ -10,21 +10,21 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from structlog import get_logger
 from structlog.contextvars import bound_contextvars, get_contextvars
 
-from src.api.schemas.schedule_schema import ScheduleCreate
+from src.api.schemas.schedules import ScheduleCreate
 from src.db import Schedule
 
 log = get_logger()
 
 
-class IScheduleService(ABC):
-    def __init__(self, session: AsyncSession):
+class IScheduleRepo(ABC):
+    def __init__(self, session: AsyncSession, schedule_lowest_bound: time, schedule_highest_bound: time):
         self._session = session
+        self._schedule_lowest_bound = schedule_lowest_bound
+        self._schedule_highest_bound = schedule_highest_bound
         super().__init__()
 
     @abstractmethod
-    def schedule(self, schedule_in: Schedule):
-        pass
-
+    def schedule(self, schedule_in: Schedule): ...
     @abstractmethod
     async def get(self, user_id: int, schedule_id: int): ...
 
@@ -32,52 +32,63 @@ class IScheduleService(ABC):
     async def next_takings(self, user_id: int, start: datetime, stop: datetime): ...
 
     @abstractmethod
-    async def schedules(self, user_id: int) -> Iterable[Schedule]:
-        pass
+    async def schedules(self, user_id: int) -> Iterable[Schedule]: ...
 
     @abstractmethod
-    async def create(self, schedule: ScheduleCreate):
-        pass
+    async def create(self, schedule: ScheduleCreate): ...
 
 
-class ScheduleService(IScheduleService):
+class ScheduleRepo(IScheduleRepo):
     @staticmethod
-    def crontab_range(start: datetime, stop: datetime, cron: CronTab):
+    def _round_time_by_15(time_to_round: time):
+        reminder = time_to_round.minute % 15
+        if reminder != 0 or time_to_round.minute == 0:
+            new_time = time_to_round + timedelta(minutes=15 - reminder)
+            return new_time
+        return time_to_round
+
+    def _crontab_range(self, start: datetime, stop: datetime, cron: CronTab):
+        if cron.test(start):  # include start time in scheduling
+            new_time = self._round_time_by_15(start)
+            if new_time.hour == start.hour:
+                yield start
+
         while True:
             start = cron.next(now=start, return_datetime=True, default_utc=True)
-            reminder = start.minute % 15
-            if reminder != 0 or start.minute == 0:
-                start += timedelta(minutes=15 - reminder)
+            new_time = self._round_time_by_15(start)
+            if new_time.hour != start.hour:
+                continue
+            start = new_time
+
             if start > stop:
                 break
-            if start == stop:
+            if start == stop:  # include stop time in scheduling
                 yield start
                 break
-            if start.hour < 8 or start.hour > 22:
+
+            start_time = start.time()
+            if self._schedule_lowest_bound > start_time or self._schedule_highest_bound < start_time:
                 continue
-            if start.hour == 22 and start.minute != 0:
-                continue
+
             yield start
 
     def schedule(self, schedule_in: Schedule):
-        now = datetime.now(tz=timezone.utc)
-        start = datetime(
-            year=now.year,
-            month=now.month,
-            day=now.day,
-            hour=7,  # to have a 8:00 schedule
-            minute=59,
-            second=0,
-            microsecond=0,
+        today = date.today()
+        stop = datetime(
+            year=today.year,
+            month=today.month,
+            day=today.day,
+            hour=self._schedule_highest_bound.hour,
+            minute=self._schedule_highest_bound.minute,
+            second=self._schedule_highest_bound.second,
+            microsecond=self._schedule_highest_bound.microsecond,
             tzinfo=timezone.utc,
         )
-        stop = datetime(
-            year=now.year, month=now.month, day=now.day, hour=22, minute=0, second=0, microsecond=0, tzinfo=timezone.utc
-        )
-        expired_datetime = schedule_in.intake_finish if schedule_in.intake_finish else stop
-        for scheduled_datetime in self.crontab_range(start, stop, CronTab(schedule_in.intake_period)):
-            if scheduled_datetime > expired_datetime:
-                return
+        stop = schedule_in.intake_finish if schedule_in.intake_finish and schedule_in.intake_finish < stop else stop
+
+        for scheduled_datetime in self._crontab_range(
+            schedule_in.intake_start, stop, CronTab(schedule_in.intake_period)
+        ):
             yield schedule_in, scheduled_datetime
 
     async def get(self, user_id: int, schedule_id: int):
@@ -101,10 +112,7 @@ class ScheduleService(IScheduleService):
             await log.ainfo("Sent request to db", parent_span_id=parent_span_id)
         for schedule in schedules:
             schedule: Schedule
-            expired_datetime = schedule.intake_finish if schedule.intake_finish else stop
-            for scheduled_datetime in self.crontab_range(start, stop, CronTab(schedule.intake_period)):
-                if scheduled_datetime > expired_datetime:
-                    break
+            for scheduled_datetime in self._crontab_range(start, stop, CronTab(schedule.intake_period)):
                 yield schedule, scheduled_datetime
 
     async def create(self, schedule):

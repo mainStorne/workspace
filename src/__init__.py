@@ -1,55 +1,46 @@
 import asyncio
-import logging
 from contextlib import asynccontextmanager
+from typing import Annotated
+from uuid import UUID
 
-import structlog
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Header
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.api.endpoints import schedule
 from src.api.middlewares.logging_middleware import LoggingMiddleware
+from src.api.transports.views.schedules import views
 from src.grpc.server import Server
 from src.grpc.servicers.schedule_servicer import ScheduleServiceServicer
-
-from .filter_logging import filter_user_id_from_query_parameter
-
-shared_processors = [
-    structlog.processors.add_log_level,
-    structlog.processors.StackInfoRenderer(),
-    structlog.dev.set_exc_info,
-    structlog.processors.TimeStamper(fmt=r"%Y-%m-%d %H:%M:%S", utc=True),
-    structlog.processors.JSONRenderer(),
-]
-
-
-structlog.configure(
-    processors=[structlog.contextvars.merge_contextvars, filter_user_id_from_query_parameter, *shared_processors],
-    wrapper_class=structlog.make_filtering_bound_logger(logging.DEBUG),
-    context_class=dict,
-    logger_factory=structlog.PrintLoggerFactory(),
-    cache_logger_on_first_use=True,
-)
-
-formatter = structlog.stdlib.ProcessorFormatter(
-    processors=[structlog.stdlib.ProcessorFormatter.remove_processors_meta, *shared_processors],
-)
-
-handler = logging.StreamHandler()
-handler.setFormatter(formatter)
-root_logger = logging.getLogger()
-root_logger.addHandler(handler)
-root_logger.setLevel(logging.INFO)
+from src.logging import setup_logging
+from src.settings import get_env_settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    setup_logging()
+    settings = get_env_settings()
+    db_engine = create_async_engine(settings.database.sqlalchemy_url)
+    db_sessionmaker = async_sessionmaker(db_engine, expire_on_commit=False, class_=AsyncSession)
     server = Server(ScheduleServiceServicer(), 50051)
     await server.start()
     asyncio.create_task(server.wait_for_termination())  # noqa: RUF006
-    yield
+    yield {"db_engine": db_engine, "db_sessionmaker": db_sessionmaker}
+    await db_engine.dispose()
     await server.stop()
 
 
-app = FastAPI(lifespan=lifespan)
+def add_trace_documentation(
+    trace_id: Annotated[UUID | None, Header(alias="X-Trace-Id")] = None,
+    request_id: Annotated[UUID | None, Header(alias="X-Request-Id")] = None,
+):
+    return trace_id, request_id
+
+
+app = FastAPI(lifespan=lifespan, dependencies=[Depends(add_trace_documentation)])
 app.add_middleware(LoggingMiddleware)
 
-app.include_router(schedule.r)
+app.include_router(views.r)
+
+
+def make_app():
+    pass

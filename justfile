@@ -1,5 +1,5 @@
 openapi_codegen:
-    uv run datamodel-codegen --input openapi.yaml --output src/api/schemas/generated.py
+    datamodel-codegen --input openapi.json --openapi-scopes schemas --input-file-type openapi --output src/api/schemas/generated.py
 
 [working-directory: 'src/grpc/generated']
 grpc_codegen:

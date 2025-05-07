@@ -5,10 +5,9 @@ from pydantic import ValidationError
 
 import grpc
 from grpc.aio import ServicerContext
-from src.repositories.schedule_repository import ScheduleExpiredException, ScheduleNotFoundException, ScheduleRepository
-
-from ...api.schemas.schedule_schema import ScheduleCreate
-from ..generated.schedule_pb2 import (
+from src.api.schemas.schedules import ScheduleCreate
+from src.grpc.depends import schedule_inject
+from src.grpc.generated.schedule_pb2 import (
     CreateScheduleRequest,
     CreateScheduleResponse,
     GetNextTakingsRequest,
@@ -18,14 +17,14 @@ from ..generated.schedule_pb2 import (
     MakeScheduleRequest,
     MakeScheduleResponse,
 )
-from ..generated.schedule_pb2_grpc import ScheduleServiceServicer as _ScheduleServiceServicer
-from ..injections.schedule_inject import schedule_inject
+from src.grpc.generated.schedule_pb2_grpc import ScheduleServiceServicer as _ScheduleServiceServicer
+from src.services.schedules_service import ScheduleExpiredException, ScheduleNotFoundException, ScheduleService
 
 
 class ScheduleServiceServicer(_ScheduleServiceServicer):
     @schedule_inject
     async def CreateSchedule(
-        self, request: CreateScheduleRequest, context: ServicerContext, schedule_repository: ScheduleRepository
+        self, request: CreateScheduleRequest, context: ServicerContext, schedule_service: ScheduleService
     ):
         try:
             schedule = ScheduleCreate(
@@ -39,16 +38,16 @@ class ScheduleServiceServicer(_ScheduleServiceServicer):
         except ValidationError:
             return await context.abort(grpc.StatusCode.ABORTED, "Validation error")
 
-        schedule_id = await schedule_repository.create(schedule)
+        schedule_id = await schedule_service.create(schedule)
         return CreateScheduleResponse(id=schedule_id)
 
     @schedule_inject
     async def MakeSchedule(
-        self, request: MakeScheduleRequest, context: ServicerContext, schedule_repository: ScheduleRepository
+        self, request: MakeScheduleRequest, context: ServicerContext, schedule_service: ScheduleService
     ):
         response = MakeScheduleResponse()
         try:
-            schedule_gen = await schedule_repository.schedule(request.user_id, request.schedule_id)
+            schedule_gen = await schedule_service.schedule(request.user_id, request.schedule_id)
         except ScheduleNotFoundException:
             return await context.abort(grpc.StatusCode.NOT_FOUND)
         except ScheduleExpiredException:
@@ -59,17 +58,17 @@ class ScheduleServiceServicer(_ScheduleServiceServicer):
         return response
 
     @schedule_inject
-    async def GetScheduleIds(self, request: GetScheduleIdsRequest, context, schedule_repository: ScheduleRepository):
+    async def GetScheduleIds(self, request: GetScheduleIdsRequest, context, schedule_service: ScheduleService):
         response = GetScheduleIdsResponse()
-        for schedule_id in await schedule_repository.schedules(request.user_id):
+        for schedule_id in await schedule_service.schedules(request.user_id):
             response.ids.append(schedule_id)
 
         return response
 
     @schedule_inject
-    async def GetNextTakings(self, request: GetNextTakingsRequest, context, schedule_repository: ScheduleRepository):
+    async def GetNextTakings(self, request: GetNextTakingsRequest, context, schedule_service: ScheduleService):
         response = GetNextTakingsResponse()
-        async for schedule, scheduled_datetime in await schedule_repository.next_takings(user_id=request.user_id):
+        async for schedule, scheduled_datetime in await schedule_service.next_takings(user_id=request.user_id):
             timestamp = Timestamp()
             timestamp.FromDatetime(scheduled_datetime)
             response.items.add(

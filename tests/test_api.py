@@ -7,11 +7,11 @@ from freezegun import freeze_time
 from httpx import AsyncClient
 
 from src import app
-from src.api.deps.schedule_dependency import ScheduleRepository, get_schedule_repository, get_schedule_service
-from src.api.schemas.schedule_schema import TakingsRead
+from src.api.depends import get_schedule_repo
+from src.api.schemas.schedules import TakingsRead
 from src.db import Schedule
-
-from .utils import intake_start
+from src.services.schedules_service import ScheduleService
+from tests.utils import day_with_zero_hour
 
 pytestmark = pytest.mark.anyio
 
@@ -27,7 +27,7 @@ def assert_schedule(scheduled: datetime):
 # TODO: Can't monkeypatch datetime object because fastapi route saves usual type
 @pytest.mark.skip
 async def test_create_schedule(client: AsyncClient, session, monkeypatch):
-    intake_finish = (intake_start + timedelta(days=3)).isoformat()
+    intake_finish = (day_with_zero_hour + timedelta(days=3)).isoformat()
     with patch("src.api.schemas.schedule_schema.ScheduleCreate", MagicMock()):
         response = await client.post(
             "/schedule",
@@ -44,7 +44,7 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
     assert schedule is not None
 
 
-@freeze_time(intake_start)
+@freeze_time(day_with_zero_hour)
 @pytest.mark.parametrize(
     "schedule,schedules_count",
     [
@@ -54,7 +54,7 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
                 user_id=1,
                 intake_period="15 20 * * *",
                 intake_finish=None,
-                intake_start=intake_start,
+                intake_start=day_with_zero_hour,
             ),
             1,
         ),
@@ -64,7 +64,7 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
                 user_id=1,
                 intake_period="*/5 21 * * *",
                 intake_finish=None,
-                intake_start=intake_start,
+                intake_start=day_with_zero_hour,
             ),
             4,
         ),
@@ -74,7 +74,7 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
                 user_id=1,
                 intake_period="0 * * * *",
                 intake_finish=None,
-                intake_start=intake_start,
+                intake_start=day_with_zero_hour,
             ),
             14,
         ),
@@ -83,8 +83,8 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
                 medicine_name="",
                 user_id=1,
                 intake_period="0 * * * *",
-                intake_finish=intake_start + timedelta(hours=6),
-                intake_start=intake_start,
+                intake_finish=day_with_zero_hour + timedelta(hours=6),
+                intake_start=day_with_zero_hour,
             ),
             0,
         ),
@@ -93,8 +93,8 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
                 medicine_name="",
                 user_id=1,
                 intake_period="0 * * * *",
-                intake_finish=intake_start + timedelta(hours=22),
-                intake_start=intake_start,
+                intake_finish=day_with_zero_hour + timedelta(hours=22),
+                intake_start=day_with_zero_hour,
             ),
             14,
         ),
@@ -103,8 +103,8 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
                 medicine_name="",
                 user_id=1,
                 intake_period="0 9-15 * * *",
-                intake_finish=intake_start + timedelta(hours=22),
-                intake_start=intake_start,
+                intake_finish=day_with_zero_hour + timedelta(hours=22),
+                intake_start=day_with_zero_hour,
             ),
             7,
         ),
@@ -113,8 +113,8 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
                 medicine_name="",
                 user_id=1,
                 intake_period="0 * * * *",
-                intake_finish=intake_start + timedelta(hours=10),
-                intake_start=intake_start,
+                intake_finish=day_with_zero_hour + timedelta(hours=10),
+                intake_start=day_with_zero_hour,
             ),
             2,
         ),
@@ -123,8 +123,8 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
                 medicine_name="",
                 user_id=1,
                 intake_period="0 * * * *",
-                intake_finish=intake_start + timedelta(hours=20),
-                intake_start=intake_start,
+                intake_finish=day_with_zero_hour + timedelta(hours=20),
+                intake_start=day_with_zero_hour,
             ),
             12,
         ),
@@ -132,9 +132,9 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
             Schedule(
                 medicine_name="",
                 user_id=1,
-                intake_period=f"0 * {(intake_start + timedelta(days=1)).day} * *",
+                intake_period=f"0 * {(day_with_zero_hour + timedelta(days=1)).day} * *",
                 intake_finish=None,
-                intake_start=intake_start,
+                intake_start=day_with_zero_hour,
             ),
             0,
         ),
@@ -170,7 +170,7 @@ async def test_intake_finish_none(schedule, client, session):
     assert response.status_code == 200
 
 
-@freeze_time(intake_start)
+@freeze_time(day_with_zero_hour)
 @pytest.mark.parametrize(
     "schedule,schedules_count,days",
     [
@@ -180,7 +180,7 @@ async def test_intake_finish_none(schedule, client, session):
                 medicine_name="",
                 intake_finish=None,
                 user_id=1,
-                intake_start=intake_start,
+                intake_start=day_with_zero_hour,
             ),
             16,
             8,
@@ -191,7 +191,7 @@ async def test_intake_finish_none(schedule, client, session):
                 medicine_name="",
                 intake_finish=None,
                 user_id=1,
-                intake_start=intake_start,
+                intake_start=day_with_zero_hour,
             ),
             12,
             6,
@@ -200,9 +200,9 @@ async def test_intake_finish_none(schedule, client, session):
             Schedule(
                 intake_period="0 */8 * * *",
                 medicine_name="",
-                intake_finish=intake_start + timedelta(days=3),
+                intake_finish=day_with_zero_hour + timedelta(days=3),
                 user_id=1,
-                intake_start=intake_start - timedelta(days=1),
+                intake_start=day_with_zero_hour - timedelta(days=1),
             ),
             6,
             6,
@@ -211,8 +211,8 @@ async def test_intake_finish_none(schedule, client, session):
             Schedule(
                 intake_period="0 */8 * * *",
                 medicine_name="",
-                intake_start=intake_start,
-                intake_finish=intake_start + timedelta(days=3, hours=22),
+                intake_start=day_with_zero_hour,
+                intake_finish=day_with_zero_hour + timedelta(days=3, hours=22),
                 user_id=1,
             ),
             8,
@@ -222,8 +222,8 @@ async def test_intake_finish_none(schedule, client, session):
             Schedule(
                 intake_period="0 */8 * * *",
                 medicine_name="",
-                intake_start=intake_start,
-                intake_finish=intake_start + timedelta(days=3),
+                intake_start=day_with_zero_hour,
+                intake_finish=day_with_zero_hour + timedelta(days=3),
                 user_id=1,
             ),
             6,
@@ -232,10 +232,10 @@ async def test_intake_finish_none(schedule, client, session):
     ],
 )
 async def test_next_takings(schedule, client, session, schedules_count, days):
-    async def mock_schedule_repository(schedule_service=Depends(get_schedule_service)):  # noqa: B008
-        return ScheduleRepository(schedule_service, timedelta(days=days))
+    async def mock_schedule_service(schedule_repo=Depends(get_schedule_repo)):  # noqa: B008
+        return ScheduleService(schedule_repo, timedelta(days=days))
 
-    app.dependency_overrides[get_schedule_repository] = mock_schedule_repository
+    app.dependency_overrides[get_schedule_repo] = mock_schedule_service
 
     session.add(schedule)
     await session.commit()

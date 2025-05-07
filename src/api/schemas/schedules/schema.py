@@ -3,19 +3,12 @@ from datetime import datetime, timezone
 from crontab import CronTab
 from pydantic import field_validator, model_validator
 from pydantic.json_schema import SkipJsonSchema
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field
+
+from src.api.schemas.schedules.generated import ScheduleCreate as _ScheduleCreate
 
 
-class ScheduleCreate(SQLModel):
-    medicine_name: str
-    intake_period: str = Field(
-        description="Период приёмов записывается в [cron синтаксисе](https://en.wikipedia.org/wiki/Cron#CRON_expression), пример 0 12 * * * - каждый день в ровно 12 часов дня. **W и # символы не поддерживаются**",
-        schema_extra={"examples": ["12"]},
-    )
-    user_id: int
-    intake_finish: datetime | None = Field(
-        description="Конец лечения, null - если нет ограничения в длительности лечения",
-    )
+class ScheduleCreate(_ScheduleCreate):
     intake_start: SkipJsonSchema[datetime] = Field(default=datetime.now(tz=timezone.utc))
 
     @model_validator(mode="after")
@@ -45,16 +38,3 @@ class ScheduleCreate(SQLModel):
                 raise ValueError("Schedule must be in interval from 8 to 22 hours")  # noqa: TRY003
 
         return value
-
-
-class ScheduleRead(SQLModel):
-    id: int
-
-
-class ScheduleCard(SQLModel):
-    medicine_name: str
-    medicine_datetime: datetime
-
-
-class TakingsRead(ScheduleCard):
-    id: int

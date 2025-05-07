@@ -4,7 +4,7 @@
     "name": "project",
     // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
     // Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "uv sync --all-groups && uv run pre-commit install --install-hooks && uv run alembic upgrade head",
+	"postCreateCommand": "uv sync --all-groups && uv run pre-commit install --install-hooks && uv run alembic upgrade head && POSTGRES_DB=test uv run alembic upgrade head",
 
     // Configure tool-specific properties.
 
@@ -47,7 +47,7 @@
                 "wmaurer.vscode-jumpy",
                 "tumuerzunong.pycharm-like-snippets",
                 "sankethdev.vscode-proto",
-                "Codeium.codeium"
+                "EditorConfig.EditorConfig"
             ]
 		}
 	},
@@ -62,9 +62,6 @@
 			"version": "latest"
 		},
 		"ghcr.io/jsburckhardt/devcontainer-features/ruff:1": {
-			"version": "latest"
-		},
-		"ghcr.io/devcontainers-extra/features/cookiecutter:2": {
 			"version": "latest"
 		},
 		"ghcr.io/guiyomh/features/just:0": {

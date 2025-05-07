@@ -18,8 +18,8 @@ class LoggingInterceptor(AsyncServerInterceptor):
         metadata = context.invocation_metadata()
 
         metadata = dict(metadata) if metadata else {}
-        trace_id = metadata.get("X-TRACE-ID", str(uuid4()))
-        request_id = metadata.get("X-Request-Id", str(uuid4()))
+        trace_id = metadata.get("x-trace-id", str(uuid4()))
+        request_id = metadata.get("x-request-id", str(uuid4()))
         span_id = str(uuid4())
         structlog.contextvars.bind_contextvars(
             trace_id=trace_id,

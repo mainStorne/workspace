@@ -2,7 +2,7 @@ from geoalchemy2 import Geometry
 from sqlalchemy.dialects.postgresql import INET
 from sqlmodel import Field, SQLModel, String
 
-from .mixins import UUIDMixin
+from src.db.mixins import UUIDMixin
 
 
 class Developer(UUIDMixin, SQLModel, table=True):

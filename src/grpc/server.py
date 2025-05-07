@@ -1,9 +1,8 @@
 from structlog import get_logger
 
 import grpc
-
-from .generated.schedule_pb2_grpc import ScheduleServiceServicer, add_ScheduleServiceServicer_to_server
-from .interceptors.logging_interceptor import LoggingInterceptor
+from src.grpc.generated.schedule_pb2_grpc import ScheduleServiceServicer, add_ScheduleServiceServicer_to_server
+from src.grpc.interceptors.logging_interceptor import LoggingInterceptor
 
 log = get_logger()
 

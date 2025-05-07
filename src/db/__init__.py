@@ -1,3 +1,3 @@
 from sqlmodel import SQLModel  # noqa: F401
 
-from .schedule import Schedule  # noqa: F401
+from src.db.schedules import Schedule  # noqa: F401

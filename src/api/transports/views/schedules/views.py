@@ -1,18 +1,25 @@
-import structlog
-from fastapi import HTTPException
+from fastapi import APIRouter, HTTPException
 
-from src.repositories.schedule_repository import ScheduleExpiredException, ScheduleNotFoundException
+from src.api.depends import ScheduleServiceDependency
+from src.api.schemas.schedules import ScheduleCard, ScheduleCreate, ScheduleRead, TakingsRead
+from src.services.schedules_service import ScheduleExpiredException, ScheduleNotFoundException
 
-from ..deps.schedule_dependency import ScheduleRepositoryDependency
-from ..routers.trace_router import TraceRouter
-from ..schemas.schedule_schema import ScheduleCard, ScheduleCreate, ScheduleRead, TakingsRead
-
-log = structlog.get_logger()
-r = TraceRouter(tags=["Schedule"])
+r = APIRouter(tags=["Schedule"])
 
 
-@r.post("/schedule", response_model=ScheduleRead)
-async def create(schedule_repository: ScheduleRepositoryDependency, schedule: ScheduleCreate):
+@r.get("/schedules")
+async def schedules(user_id: int, schedule_repository: ScheduleServiceDependency) -> list[ScheduleRead]:
+    """Возвращает данные о выбранном расписании с рассчитанным  # noqa: RUF003
+    графиком приёмов на день
+    """  # noqa: RUF002
+    response = []
+    for schedule in await schedule_repository.schedules(user_id):
+        response.append({"id": schedule})
+    return response
+
+
+@r.post("/schedule")
+async def create(schedule_repository: ScheduleServiceDependency, schedule: ScheduleCreate) -> ScheduleRead:
     schedule_id = await schedule_repository.create(schedule=schedule)
     return {"id": schedule_id}
 
@@ -20,9 +27,10 @@ async def create(schedule_repository: ScheduleRepositoryDependency, schedule: Sc
 @r.get(
     "/schedule",
     responses={404: {"detail": "Not found"}, 400: {"detail": "Расписание истекло!"}},
-    response_model=list[ScheduleCard],
 )
-async def schedule(*, schedule_repository: ScheduleRepositoryDependency, user_id: int, schedule_id: int):
+async def schedule(
+    *, schedule_repository: ScheduleServiceDependency, user_id: int, schedule_id: int
+) -> list[ScheduleCard]:
     """Возвращает данные о выбранном расписании с рассчитанным
     графиком приёмов на день
     """  # noqa: RUF002
@@ -42,25 +50,12 @@ async def schedule(*, schedule_repository: ScheduleRepositoryDependency, user_id
     return response
 
 
-@r.get("/schedules", response_model=list[ScheduleRead])
-async def schedules(user_id: int, schedule_repository: ScheduleRepositoryDependency):
-    """Возвращает данные о выбранном расписании с рассчитанным  # noqa: RUF003
-    графиком приёмов на день
-    """  # noqa: RUF002
-    # TODO: add new table users and link users to schedules. Change id to UUID type. Handle user not found error
-    response = []
-    for schedule in await schedule_repository.schedules(user_id):
-        response.append({"id": schedule})
-    return response
-
-
-@r.get("/next_takings", response_model=list[TakingsRead])
-async def next_takings(schedule_repository: ScheduleRepositoryDependency, user_id: int):
+@r.get("/next_takings")
+async def next_takings(schedule_repository: ScheduleServiceDependency, user_id: int) -> list[TakingsRead]:
     """Возвращает данные о таблетках, которые необходимо принять  # noqa: RUF003
     в ближайшие период (например, в ближайший час). Период
     времени задается через параметры конфигурации сервиса
     """  # noqa: RUF002
-    # TODO: handle user not found error
     response = []
     async for schedule, scheduled_datetime in await schedule_repository.next_takings(user_id=user_id):
         response.append(

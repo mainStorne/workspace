@@ -16,8 +16,7 @@ from src.grpc.generated.schedule_pb2 import (
 from src.grpc.generated.schedule_pb2_grpc import ScheduleServiceStub
 from src.grpc.server import Server
 from src.grpc.servicers.schedule_servicer import ScheduleServiceServicer
-
-from .utils import intake_start
+from tests.utils import day_with_zero_hour
 
 pytestmark = pytest.mark.anyio
 
@@ -57,13 +56,13 @@ async def test_get_schedule_ids(stub, schedule, session):
     assert response.ids == [schedule.id]
 
 
-@freeze_time(intake_start)
+@freeze_time(day_with_zero_hour)
 async def test_make_schedule(stub, schedule):
     response = await stub.MakeSchedule(MakeScheduleRequest(user_id=schedule.user_id, schedule_id=schedule.id))
     assert len(response.items) == 1
 
 
-@freeze_time(intake_start)
+@freeze_time(day_with_zero_hour)
 @pytest.mark.parametrize(
     "schedule_model,schedules_count,days",
     [
@@ -73,7 +72,7 @@ async def test_make_schedule(stub, schedule):
                 medicine_name="",
                 intake_finish=None,
                 user_id=1,
-                intake_start=intake_start,
+                intake_start=day_with_zero_hour,
             ),
             16,
             timedelta(8),
@@ -84,7 +83,7 @@ async def test_make_schedule(stub, schedule):
                 medicine_name="",
                 intake_finish=None,
                 user_id=1,
-                intake_start=intake_start,
+                intake_start=day_with_zero_hour,
             ),
             12,
             timedelta(6),
@@ -93,9 +92,9 @@ async def test_make_schedule(stub, schedule):
             Schedule(
                 intake_period="0 */8 * * *",
                 medicine_name="",
-                intake_finish=intake_start + timedelta(days=3),
+                intake_finish=day_with_zero_hour + timedelta(days=3),
                 user_id=1,
-                intake_start=intake_start - timedelta(days=1),
+                intake_start=day_with_zero_hour - timedelta(days=1),
             ),
             6,
             timedelta(6),
@@ -104,8 +103,8 @@ async def test_make_schedule(stub, schedule):
             Schedule(
                 intake_period="0 */8 * * *",
                 medicine_name="",
-                intake_start=intake_start,
-                intake_finish=intake_start + timedelta(days=3, hours=22),
+                intake_start=day_with_zero_hour,
+                intake_finish=day_with_zero_hour + timedelta(days=3, hours=22),
                 user_id=1,
             ),
             8,
@@ -115,8 +114,8 @@ async def test_make_schedule(stub, schedule):
             Schedule(
                 intake_period="0 */8 * * *",
                 medicine_name="",
-                intake_start=intake_start,
-                intake_finish=intake_start + timedelta(days=3),
+                intake_start=day_with_zero_hour,
+                intake_finish=day_with_zero_hour + timedelta(days=3),
                 user_id=1,
             ),
             6,

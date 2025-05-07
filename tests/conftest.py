@@ -7,11 +7,10 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src import app
-from src.api.deps.session_dependency import get_session
+from src.api.depends import get_db_depends
 from src.conf import settings
 from src.db import Schedule
-
-from .utils import intake_start
+from tests.utils import day_with_zero_hour
 
 pytestmark = pytest.mark.anyio
 settings.database.db = "test"
@@ -41,7 +40,7 @@ async def session():
             async with session as s:
                 yield s
 
-        app.dependency_overrides[get_session] = mock_get_session
+        app.dependency_overrides[get_db_depends] = mock_get_session
         async with session as s:
             yield s
         await transaction.rollback()
@@ -53,8 +52,8 @@ async def schedule(session):
         medicine_name="test",
         intake_period="8 12 * * *",
         user_id=1,
-        intake_finish=intake_start + timedelta(days=1),
-        intake_start=intake_start,
+        intake_finish=day_with_zero_hour + timedelta(days=1),
+        intake_start=day_with_zero_hour,
     )
     session.add(_schedule)
     await session.commit()
