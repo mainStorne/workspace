@@ -115,7 +115,11 @@ class ScheduleRepo(IScheduleRepo):
             await log.ainfo("Sent request to db", parent_span_id=parent_span_id)
         for schedule in schedules:
             schedule: Schedule
-            for scheduled_datetime in self._crontab_range(start, stop, CronTab(schedule.intake_period)):
+            schedule_start = schedule.intake_start if start < schedule.intake_start else start
+            schedule_stop = schedule.intake_finish if schedule.intake_finish and schedule.intake_finish < stop else stop
+            for scheduled_datetime in self._crontab_range(
+                schedule_start, schedule_stop, CronTab(schedule.intake_period)
+            ):
                 yield schedule, scheduled_datetime
 
     async def create(self, schedule):

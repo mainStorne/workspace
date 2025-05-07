@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 from freezegun import freeze_time
 from pydantic import ValidationError
+from structlog.contextvars import bind_contextvars
 
 from src.api.schemas.schedules import ScheduleCreate
 from src.db.schedules import Schedule
@@ -325,6 +326,47 @@ def test_schedule(
     )
     schedule_repo = ScheduleRepo(AsyncMock(), schedule_lowest_bound, schedule_highest_bound)
     schedule_and_scheduled_datetime = list(schedule_repo.schedule(schedule_db))
+    assert len(schedule_and_scheduled_datetime) == len(expected_schedules_datetime)
+    for scheduled_datetime, expected_datetime in zip(schedule_and_scheduled_datetime, expected_schedules_datetime):
+        assert scheduled_datetime[1] == expected_datetime
+
+
+@pytest.mark.anyio
+@freeze_time(day_with_zero_hour)
+@pytest.mark.parametrize(
+    "schedules, start, stop, expected_schedules_datetime, schedule_lowest_bound,schedule_highest_bound",
+    [
+        (
+            [
+                Schedule(
+                    medicine_name="",
+                    user_id=1,
+                    intake_period="0 12 * * *",
+                    intake_start=day_with_zero_hour,
+                    intake_finish=None,
+                ),
+            ],
+            day_with_zero_hour - timedelta(days=3),
+            day_with_zero_hour + timedelta(days=3),
+            [
+                day_with_zero_hour.replace(hour=12),
+                day_with_zero_hour.replace(hour=12) + timedelta(days=1),
+                day_with_zero_hour.replace(hour=12) + timedelta(days=2),
+            ],
+            time(hour=8),
+            time(hour=22),
+        )
+    ],
+)
+async def test_next_takings(
+    schedules, start, stop, expected_schedules_datetime, schedule_lowest_bound, schedule_highest_bound
+):
+    bind_contextvars(span_id=1)
+    mock_session = AsyncMock()
+    mock_session.exec.return_value = schedules
+    schedule_repo = ScheduleRepo(mock_session, schedule_lowest_bound, schedule_highest_bound)
+
+    schedule_and_scheduled_datetime = [schedules async for schedules in schedule_repo.next_takings(0, start, stop)]
     assert len(schedule_and_scheduled_datetime) == len(expected_schedules_datetime)
     for scheduled_datetime, expected_datetime in zip(schedule_and_scheduled_datetime, expected_schedules_datetime):
         assert scheduled_datetime[1] == expected_datetime
