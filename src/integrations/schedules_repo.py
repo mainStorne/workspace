@@ -41,6 +41,8 @@ class IScheduleRepo(ABC):
 class ScheduleRepo(IScheduleRepo):
     @staticmethod
     def _round_time_by_15(time_to_round: time):
+        if time_to_round.minute == 0:
+            return time_to_round
         reminder = time_to_round.minute % 15
         if reminder != 0 or time_to_round.minute == 0:
             new_time = time_to_round + timedelta(minutes=15 - reminder)
@@ -48,7 +50,8 @@ class ScheduleRepo(IScheduleRepo):
         return time_to_round
 
     def _crontab_range(self, start: datetime, stop: datetime, cron: CronTab):
-        if cron.test(start):  # include start time in scheduling
+        # include start time in scheduling
+        if cron.test(start) and self._schedule_lowest_bound <= start.time() <= self._schedule_highest_bound:
             new_time = self._round_time_by_15(start)
             if new_time.hour == start.hour:
                 yield start
@@ -56,7 +59,7 @@ class ScheduleRepo(IScheduleRepo):
         while True:
             start = cron.next(now=start, return_datetime=True, default_utc=True)
             new_time = self._round_time_by_15(start)
-            if new_time.hour != start.hour:
+            if new_time.hour != start.hour:  # test this with schedule on multiple hours
                 continue
             start = new_time
 

@@ -20,12 +20,12 @@ from tests.utils import day_with_zero_hour
         "5",
     ],
 )
-def test_wrong_schedules(cron):
+def test_wrong_cron_syntax_schedules(cron):
     with pytest.raises(ValidationError):
         ScheduleCreate(medicine_name="name", intake_period=cron, intake_finish=None, user_id=2)
 
 
-def test_negative_duration():
+def test_finish_time_greater_then_start_time():
     with pytest.raises(ValidationError):
         ScheduleCreate(
             medicine_name="name",
@@ -38,13 +38,13 @@ def test_negative_duration():
 
 @freeze_time(day_with_zero_hour)
 @pytest.mark.parametrize(
-    "intake_period,intake_start,intake_finish,schedules_count,schedule_lowest_bound,schedule_highest_bound",
+    "intake_period,intake_start,intake_finish, expected_schedules_datetime, schedule_lowest_bound,schedule_highest_bound",
     [
         (
             "15 20 * * *",
             day_with_zero_hour,
             None,
-            1,  # 20:15
+            [day_with_zero_hour.replace(hour=20, minute=15)],
             time(hour=8),
             time(hour=22),
         ),
@@ -52,7 +52,12 @@ def test_negative_duration():
             "*/5 21 * * *",
             day_with_zero_hour,
             None,
-            3,  # 21:15 21:30 21:45
+            [
+                day_with_zero_hour.replace(hour=21, minute=00),
+                day_with_zero_hour.replace(hour=21, minute=15),
+                day_with_zero_hour.replace(hour=21, minute=30),
+                day_with_zero_hour.replace(hour=21, minute=45),
+            ],
             time(hour=8),
             time(hour=22),
         ),
@@ -60,7 +65,23 @@ def test_negative_duration():
             "0 * * * *",
             day_with_zero_hour,
             None,
-            14,  # 8:15 9:15 .... 20:15 21:15
+            [
+                day_with_zero_hour.replace(hour=8, minute=00),
+                day_with_zero_hour.replace(hour=9, minute=00),
+                day_with_zero_hour.replace(hour=10, minute=00),
+                day_with_zero_hour.replace(hour=11, minute=00),
+                day_with_zero_hour.replace(hour=12, minute=00),
+                day_with_zero_hour.replace(hour=13, minute=00),
+                day_with_zero_hour.replace(hour=14, minute=00),
+                day_with_zero_hour.replace(hour=15, minute=00),
+                day_with_zero_hour.replace(hour=16, minute=00),
+                day_with_zero_hour.replace(hour=17, minute=00),
+                day_with_zero_hour.replace(hour=18, minute=00),
+                day_with_zero_hour.replace(hour=19, minute=00),
+                day_with_zero_hour.replace(hour=20, minute=00),
+                day_with_zero_hour.replace(hour=21, minute=00),
+                day_with_zero_hour.replace(hour=22, minute=00),
+            ],
             time(hour=8),
             time(hour=22),
         ),
@@ -68,7 +89,9 @@ def test_negative_duration():
             "0 * * * *",
             day_with_zero_hour + timedelta(hours=6),
             day_with_zero_hour + timedelta(hours=8),
-            1,  # 8:00
+            [
+                day_with_zero_hour.replace(hour=8, minute=0),
+            ],
             time(hour=8),
             time(hour=22),
         ),
@@ -76,7 +99,7 @@ def test_negative_duration():
             "0 * * * *",
             day_with_zero_hour + timedelta(hours=22),
             day_with_zero_hour + timedelta(hours=23),
-            1,  # 22:00
+            [day_with_zero_hour.replace(hour=22, minute=00)],
             time(hour=8),
             time(hour=22),
         ),
@@ -84,7 +107,15 @@ def test_negative_duration():
             "0 9-15 * * *",
             day_with_zero_hour,
             None,
-            7,  # 9:00 10:00 11:00 12:00 13:00 14:00 15:00
+            [
+                day_with_zero_hour.replace(hour=9, minute=00),
+                day_with_zero_hour.replace(hour=10, minute=00),
+                day_with_zero_hour.replace(hour=11, minute=00),
+                day_with_zero_hour.replace(hour=12, minute=00),
+                day_with_zero_hour.replace(hour=13, minute=00),
+                day_with_zero_hour.replace(hour=14, minute=00),
+                day_with_zero_hour.replace(hour=15, minute=00),
+            ],
             time(hour=8),
             time(hour=22),
         ),
@@ -92,7 +123,21 @@ def test_negative_duration():
             "0 * * * *",
             day_with_zero_hour + timedelta(hours=10),
             day_with_zero_hour + timedelta(hours=23),
-            12,
+            [
+                day_with_zero_hour.replace(hour=10, minute=00),
+                day_with_zero_hour.replace(hour=11, minute=00),
+                day_with_zero_hour.replace(hour=12, minute=00),
+                day_with_zero_hour.replace(hour=13, minute=00),
+                day_with_zero_hour.replace(hour=14, minute=00),
+                day_with_zero_hour.replace(hour=15, minute=00),
+                day_with_zero_hour.replace(hour=16, minute=00),
+                day_with_zero_hour.replace(hour=17, minute=00),
+                day_with_zero_hour.replace(hour=18, minute=00),
+                day_with_zero_hour.replace(hour=19, minute=00),
+                day_with_zero_hour.replace(hour=20, minute=00),
+                day_with_zero_hour.replace(hour=21, minute=00),
+                day_with_zero_hour.replace(hour=22, minute=00),
+            ],
             time(hour=8),
             time(hour=22),
         ),
@@ -100,29 +145,186 @@ def test_negative_duration():
             "0 * * * *",
             day_with_zero_hour + timedelta(hours=20),
             day_with_zero_hour + timedelta(hours=23),
-            3,  # 20:00 21:00 22:00
+            [
+                day_with_zero_hour.replace(hour=20, minute=00),
+                day_with_zero_hour.replace(hour=21, minute=00),
+                day_with_zero_hour.replace(hour=22, minute=00),
+            ],
             time(hour=8),
             time(hour=22),
         ),
         (
+            # schedule on the next day
             f"0 * {(day_with_zero_hour + timedelta(days=1)).day} * *",
             day_with_zero_hour,
             None,
-            0,
+            [],
+            time(hour=8),
+            time(hour=22),
+        ),
+        (
+            "7 11-15 * * *",
+            day_with_zero_hour,
+            None,
+            [
+                day_with_zero_hour.replace(hour=11, minute=15),
+                day_with_zero_hour.replace(hour=12, minute=15),
+                day_with_zero_hour.replace(hour=13, minute=15),
+                day_with_zero_hour.replace(hour=14, minute=15),
+                day_with_zero_hour.replace(hour=15, minute=15),
+            ],
+            time(hour=8),
+            time(hour=22),
+        ),
+        (
+            "7 11-15 * * *",
+            day_with_zero_hour,
+            day_with_zero_hour + timedelta(hours=14),
+            [
+                day_with_zero_hour.replace(hour=11, minute=15),
+                day_with_zero_hour.replace(hour=12, minute=15),
+                day_with_zero_hour.replace(hour=13, minute=15),
+            ],
+            time(hour=8),
+            time(hour=22),
+        ),
+        (
+            "*/50 * * * *",
+            day_with_zero_hour,
+            None,
+            [
+                day_with_zero_hour.replace(hour=8, minute=0),
+                day_with_zero_hour.replace(hour=9, minute=0),
+                day_with_zero_hour.replace(hour=10, minute=0),
+                day_with_zero_hour.replace(hour=11, minute=0),
+                day_with_zero_hour.replace(hour=12, minute=0),
+                day_with_zero_hour.replace(hour=13, minute=0),
+                day_with_zero_hour.replace(hour=14, minute=0),
+                day_with_zero_hour.replace(hour=15, minute=0),
+                day_with_zero_hour.replace(hour=16, minute=0),
+                day_with_zero_hour.replace(hour=17, minute=0),
+                day_with_zero_hour.replace(hour=18, minute=0),
+                day_with_zero_hour.replace(hour=19, minute=0),
+                day_with_zero_hour.replace(hour=20, minute=0),
+                day_with_zero_hour.replace(hour=21, minute=0),
+                day_with_zero_hour.replace(hour=22, minute=0),
+            ],
+            time(hour=8),
+            time(hour=22),
+        ),
+        (
+            f"*/50 * {day_with_zero_hour.day} {day_with_zero_hour.month} {day_with_zero_hour.weekday() + 1},5",
+            day_with_zero_hour,
+            None,
+            [
+                day_with_zero_hour.replace(hour=8, minute=0),
+                day_with_zero_hour.replace(hour=9, minute=0),
+                day_with_zero_hour.replace(hour=10, minute=0),
+                day_with_zero_hour.replace(hour=11, minute=0),
+                day_with_zero_hour.replace(hour=12, minute=0),
+                day_with_zero_hour.replace(hour=13, minute=0),
+                day_with_zero_hour.replace(hour=14, minute=0),
+                day_with_zero_hour.replace(hour=15, minute=0),
+                day_with_zero_hour.replace(hour=16, minute=0),
+                day_with_zero_hour.replace(hour=17, minute=0),
+                day_with_zero_hour.replace(hour=18, minute=0),
+                day_with_zero_hour.replace(hour=19, minute=0),
+                day_with_zero_hour.replace(hour=20, minute=0),
+                day_with_zero_hour.replace(hour=21, minute=0),
+                day_with_zero_hour.replace(hour=22, minute=0),
+            ],
+            time(hour=8),
+            time(hour=22),
+        ),
+        (
+            f"*/50 * {day_with_zero_hour.day}-15 {day_with_zero_hour.month}-10,11 {day_with_zero_hour.weekday() + 1},5",
+            day_with_zero_hour,
+            None,
+            [
+                day_with_zero_hour.replace(hour=8, minute=0),
+                day_with_zero_hour.replace(hour=9, minute=0),
+                day_with_zero_hour.replace(hour=10, minute=0),
+                day_with_zero_hour.replace(hour=11, minute=0),
+                day_with_zero_hour.replace(hour=12, minute=0),
+                day_with_zero_hour.replace(hour=13, minute=0),
+                day_with_zero_hour.replace(hour=14, minute=0),
+                day_with_zero_hour.replace(hour=15, minute=0),
+                day_with_zero_hour.replace(hour=16, minute=0),
+                day_with_zero_hour.replace(hour=17, minute=0),
+                day_with_zero_hour.replace(hour=18, minute=0),
+                day_with_zero_hour.replace(hour=19, minute=0),
+                day_with_zero_hour.replace(hour=20, minute=0),
+                day_with_zero_hour.replace(hour=21, minute=0),
+                day_with_zero_hour.replace(hour=22, minute=0),
+            ],
+            time(hour=8),
+            time(hour=22),
+        ),
+        (
+            f"*/50 * {day_with_zero_hour.day} {day_with_zero_hour.month} {day_with_zero_hour.weekday() + 1}",
+            day_with_zero_hour,
+            None,
+            [
+                day_with_zero_hour.replace(hour=8, minute=0),
+                day_with_zero_hour.replace(hour=9, minute=0),
+                day_with_zero_hour.replace(hour=10, minute=0),
+                day_with_zero_hour.replace(hour=11, minute=0),
+                day_with_zero_hour.replace(hour=12, minute=0),
+                day_with_zero_hour.replace(hour=13, minute=0),
+                day_with_zero_hour.replace(hour=14, minute=0),
+                day_with_zero_hour.replace(hour=15, minute=0),
+                day_with_zero_hour.replace(hour=16, minute=0),
+                day_with_zero_hour.replace(hour=17, minute=0),
+                day_with_zero_hour.replace(hour=18, minute=0),
+                day_with_zero_hour.replace(hour=19, minute=0),
+                day_with_zero_hour.replace(hour=20, minute=0),
+                day_with_zero_hour.replace(hour=21, minute=0),
+                day_with_zero_hour.replace(hour=22, minute=0),
+            ],
+            time(hour=8),
+            time(hour=22),
+        ),
+        (
+            "0 10,20 * * *",
+            day_with_zero_hour,
+            None,
+            [
+                day_with_zero_hour.replace(hour=10, minute=0),
+                day_with_zero_hour.replace(hour=20, minute=0),
+            ],
+            time(hour=8),
+            time(hour=22),
+        ),
+        (
+            "10 */8 * * *",
+            day_with_zero_hour,
+            None,
+            [
+                day_with_zero_hour.replace(hour=8, minute=15),
+                day_with_zero_hour.replace(hour=16, minute=15),
+            ],
             time(hour=8),
             time(hour=22),
         ),
     ],
 )
 def test_schedule(
-    intake_period, intake_start, intake_finish, schedules_count, schedule_lowest_bound, schedule_highest_bound
+    intake_period,
+    intake_start,
+    intake_finish,
+    expected_schedules_datetime,
+    schedule_lowest_bound,
+    schedule_highest_bound,
 ):
     """
     Тестирование алгоритма выдачи приема таблеток на день с 8:00 - до 22:00
     """  # noqa: RUF002
 
-    schedule = Schedule(
+    schedule_db = Schedule(
         medicine_name="", user_id=1, intake_period=intake_period, intake_finish=intake_finish, intake_start=intake_start
     )
     schedule_repo = ScheduleRepo(AsyncMock(), schedule_lowest_bound, schedule_highest_bound)
-    assert len(list(schedule_repo.schedule(schedule))) == schedules_count
+    schedule_and_scheduled_datetime = list(schedule_repo.schedule(schedule_db))
+    assert len(schedule_and_scheduled_datetime) == len(expected_schedules_datetime)
+    for scheduled_datetime, expected_datetime in zip(schedule_and_scheduled_datetime, expected_schedules_datetime):
+        assert scheduled_datetime[1] == expected_datetime
