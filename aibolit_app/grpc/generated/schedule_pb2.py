@@ -21,7 +21,7 @@ from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x0eschedule.proto\x12\x08schedule\x1a\x1fgoogle/protobuf/timestamp.proto"(\n\x15GetScheduleIdsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x03"%\n\x16GetScheduleIdsResponse\x12\x0b\n\x03ids\x18\x01 \x03(\x03";\n\x13MakeScheduleRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x03\x12\x13\n\x0bschedule_id\x18\x02 \x01(\x05"h\n\x18MakeScheduleResponseItem\x12\x15\n\rmedicine_name\x18\x01 \x01(\t\x12\x35\n\x11medicine_datetime\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp"I\n\x14MakeScheduleResponse\x12\x31\n\x05items\x18\x01 \x03(\x0b\x32".schedule.MakeScheduleResponseItem"\xa0\x01\n\x15\x43reateScheduleRequest\x12\x15\n\rmedicine_name\x18\x01 \x01(\t\x12\x15\n\rintake_period\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\x03\x12\x36\n\rintake_finish\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.TimestampH\x00\x88\x01\x01\x42\x10\n\x0e_intake_finish"$\n\x16\x43reateScheduleResponse\x12\n\n\x02id\x18\x01 \x01(\x05"(\n\x15GetNextTakingsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x03"v\n\x1aGetNextTakingsResponseItem\x12\x15\n\rmedicine_name\x18\x01 \x01(\t\x12\x35\n\x11medicine_datetime\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\n\n\x02id\x18\x03 \x01(\x03"M\n\x16GetNextTakingsResponse\x12\x33\n\x05items\x18\x01 \x03(\x0b\x32$.schedule.GetNextTakingsResponseItem2\xdf\x02\n\x0fScheduleService\x12S\n\x0e\x43reateSchedule\x12\x1f.schedule.CreateScheduleRequest\x1a .schedule.CreateScheduleResponse\x12S\n\x0eGetScheduleIds\x12\x1f.schedule.GetScheduleIdsRequest\x1a .schedule.GetScheduleIdsResponse\x12M\n\x0cMakeSchedule\x12\x1d.schedule.MakeScheduleRequest\x1a\x1e.schedule.MakeScheduleResponse\x12S\n\x0eGetNextTakings\x12\x1f.schedule.GetNextTakingsRequest\x1a .schedule.GetNextTakingsResponseb\x06proto3'
+    b'\n\x0eschedule.proto\x12\x08schedule\x1a\x1fgoogle/protobuf/timestamp.proto"(\n\x15GetScheduleIdsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x03"%\n\x16GetScheduleIdsResponse\x12\x0b\n\x03ids\x18\x01 \x03(\x03";\n\x13MakeScheduleRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x03\x12\x13\n\x0bschedule_id\x18\x02 \x01(\x05"\xc8\x01\n\x14MakeScheduleResponse\x12\x46\n\x05items\x18\x01 \x03(\x0b\x32\x37.schedule.MakeScheduleResponse.MakeScheduleResponseItem\x1ah\n\x18MakeScheduleResponseItem\x12\x15\n\rmedicine_name\x18\x01 \x01(\t\x12\x35\n\x11medicine_datetime\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp"\xd2\x01\n\x15\x43reateScheduleRequest\x12\x15\n\rmedicine_name\x18\x01 \x01(\t\x12\x15\n\rintake_period\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\x03\x12\x36\n\rintake_finish\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.TimestampH\x00\x88\x01\x01\x12\x30\n\x0cintake_start\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x10\n\x0e_intake_finish"$\n\x16\x43reateScheduleResponse\x12\n\n\x02id\x18\x01 \x01(\x05"(\n\x15GetNextTakingsRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\x03"\xdc\x01\n\x16GetNextTakingsResponse\x12J\n\x05items\x18\x01 \x03(\x0b\x32;.schedule.GetNextTakingsResponse.GetNextTakingsResponseItem\x1av\n\x1aGetNextTakingsResponseItem\x12\x15\n\rmedicine_name\x18\x01 \x01(\t\x12\x35\n\x11medicine_datetime\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\n\n\x02id\x18\x03 \x01(\x03\x32\xdf\x02\n\x0fScheduleService\x12S\n\x0e\x43reateSchedule\x12\x1f.schedule.CreateScheduleRequest\x1a .schedule.CreateScheduleResponse\x12S\n\x0eGetScheduleIds\x12\x1f.schedule.GetScheduleIdsRequest\x1a .schedule.GetScheduleIdsResponse\x12M\n\x0cMakeSchedule\x12\x1d.schedule.MakeScheduleRequest\x1a\x1e.schedule.MakeScheduleResponse\x12S\n\x0eGetNextTakings\x12\x1f.schedule.GetNextTakingsRequest\x1a .schedule.GetNextTakingsResponseb\x06proto3'
 )
 
 _globals = globals()
@@ -35,20 +35,20 @@ if not _descriptor._USE_C_DESCRIPTORS:
     _globals['_GETSCHEDULEIDSRESPONSE']._serialized_end = 140
     _globals['_MAKESCHEDULEREQUEST']._serialized_start = 142
     _globals['_MAKESCHEDULEREQUEST']._serialized_end = 201
-    _globals['_MAKESCHEDULERESPONSEITEM']._serialized_start = 203
-    _globals['_MAKESCHEDULERESPONSEITEM']._serialized_end = 307
-    _globals['_MAKESCHEDULERESPONSE']._serialized_start = 309
-    _globals['_MAKESCHEDULERESPONSE']._serialized_end = 382
-    _globals['_CREATESCHEDULEREQUEST']._serialized_start = 385
-    _globals['_CREATESCHEDULEREQUEST']._serialized_end = 545
-    _globals['_CREATESCHEDULERESPONSE']._serialized_start = 547
-    _globals['_CREATESCHEDULERESPONSE']._serialized_end = 583
-    _globals['_GETNEXTTAKINGSREQUEST']._serialized_start = 585
-    _globals['_GETNEXTTAKINGSREQUEST']._serialized_end = 625
-    _globals['_GETNEXTTAKINGSRESPONSEITEM']._serialized_start = 627
-    _globals['_GETNEXTTAKINGSRESPONSEITEM']._serialized_end = 745
-    _globals['_GETNEXTTAKINGSRESPONSE']._serialized_start = 747
-    _globals['_GETNEXTTAKINGSRESPONSE']._serialized_end = 824
-    _globals['_SCHEDULESERVICE']._serialized_start = 827
-    _globals['_SCHEDULESERVICE']._serialized_end = 1178
+    _globals['_MAKESCHEDULERESPONSE']._serialized_start = 204
+    _globals['_MAKESCHEDULERESPONSE']._serialized_end = 404
+    _globals['_MAKESCHEDULERESPONSE_MAKESCHEDULERESPONSEITEM']._serialized_start = 300
+    _globals['_MAKESCHEDULERESPONSE_MAKESCHEDULERESPONSEITEM']._serialized_end = 404
+    _globals['_CREATESCHEDULEREQUEST']._serialized_start = 407
+    _globals['_CREATESCHEDULEREQUEST']._serialized_end = 617
+    _globals['_CREATESCHEDULERESPONSE']._serialized_start = 619
+    _globals['_CREATESCHEDULERESPONSE']._serialized_end = 655
+    _globals['_GETNEXTTAKINGSREQUEST']._serialized_start = 657
+    _globals['_GETNEXTTAKINGSREQUEST']._serialized_end = 697
+    _globals['_GETNEXTTAKINGSRESPONSE']._serialized_start = 700
+    _globals['_GETNEXTTAKINGSRESPONSE']._serialized_end = 920
+    _globals['_GETNEXTTAKINGSRESPONSE_GETNEXTTAKINGSRESPONSEITEM']._serialized_start = 802
+    _globals['_GETNEXTTAKINGSRESPONSE_GETNEXTTAKINGSRESPONSEITEM']._serialized_end = 920
+    _globals['_SCHEDULESERVICE']._serialized_start = 923
+    _globals['_SCHEDULESERVICE']._serialized_end = 1274
 # @@protoc_insertion_point(module_scope)

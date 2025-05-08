@@ -9,7 +9,7 @@ r = APIRouter(tags=['Schedule'])
 
 @r.get('/schedules')
 async def schedules(user_id: int, schedule_repository: ScheduleServiceDependency) -> list[ScheduleRead]:
-    """Возвращает данные о выбранном расписании с рассчитанным  # noqa: RUF003
+    """Возвращает данные о выбранном расписании с рассчитанным
     графиком приёмов на день
     """  # noqa: RUF002
     response = []
@@ -58,7 +58,7 @@ async def schedule(
 
 @r.get('/next_takings')
 async def next_takings(schedule_repository: ScheduleServiceDependency, user_id: int) -> list[TakingsRead]:
-    """Возвращает данные о таблетках, которые необходимо принять  # noqa: RUF003
+    """Возвращает данные о таблетках, которые необходимо принять
     в ближайшие период (например, в ближайший час). Период
     времени задается через параметры конфигурации сервиса
     """  # noqa: RUF002

@@ -7,8 +7,6 @@ from aibolit_app.api.schemas.schedules.generated import ScheduleCreate as _Sched
 
 
 class ScheduleCreate(_ScheduleCreate):
-    intake_start: datetime = datetime.now(tz=timezone.utc)
-
     @model_validator(mode='after')
     def validate_intake_finish(self):
         if self.intake_finish is not None and self.intake_finish <= self.intake_start:

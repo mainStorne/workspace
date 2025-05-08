@@ -50,10 +50,10 @@ tests:
 # --- Code generation ---
 
 [group('code-generation')]
-openapi_codegen:
-    datamodel-codegen --input openapi.json --openapi-scopes schemas --input-file-type openapi --output src/api/schemas/generated.py
+openapi-codegen:
+    datamodel-codegen --input openapi.json --openapi-scopes schemas --input-file-type openapi --output {{SOURCE_DIR}}/api/schemas/schedules/generated.py
 
-[working-directory: 'src/grpc/generated']
 [group('code-generation')]
-grpc_codegen:
+[working-directory: 'aibolit_app/grpc/generated']
+grpc-codegen:
     python -m grpc_tools.protoc -I ../../../protos/ --python_out=. --pyi_out=. --grpc_python_out=. ../../../protos/schedule.proto

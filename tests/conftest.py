@@ -5,26 +5,21 @@ from pydantic._internal._generate_schema import GenerateSchema
 from pydantic_core import core_schema
 import pytest
 from sqlalchemy import NullPool
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from aibolit_app import make_app
 from aibolit_app.api.depends import get_db_depends
-from aibolit_app.conf import settings
 from aibolit_app.db import Schedule
+from aibolit_app.main import make_app
+from aibolit_app.settings import get_env_settings
 from tests.utils import zero_day_fixture
 
 pytestmark = pytest.mark.anyio
-settings.database.db = 'test'
-engine = create_async_engine(settings.database.sqlalchemy_url, plugins=['geoalchemy2'], poolclass=NullPool)
-session_maker = async_sessionmaker(
-    bind=engine, expire_on_commit=False, join_transaction_mode='create_savepoint', class_=AsyncSession
-)
 
-
-initial_match_type = GenerateSchema.match_type
 
 # fix pydantic patch error https://github.com/pydantic/pydantic/discussions/9343
+
+initial_match_type = GenerateSchema.match_type
 
 
 def match_type(self, obj):
@@ -36,12 +31,24 @@ def match_type(self, obj):
 GenerateSchema.match_type = match_type
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
+def settings():
+    _settings = get_env_settings()
+    _settings.database.db = 'test'
+    return _settings
+
+
+@pytest.fixture(scope='session')
+def engine(settings):
+    return create_async_engine(settings.database.sqlalchemy_url, plugins=['geoalchemy2'], poolclass=NullPool)
+
+
+@pytest.fixture(scope='session')
 def app_fixture():
     return make_app()
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 async def client(app_fixture):
     async with AsyncClient(transport=ASGITransport(app_fixture), base_url='http://test') as cli:
         yield cli
@@ -53,7 +60,7 @@ def anyio_backend():
 
 
 @pytest.fixture(autouse=True)
-async def session(app_fixture):
+async def session(app_fixture, engine):
     async with engine.connect() as connection, connection.begin() as transaction:
         session = AsyncSession(bind=connection, expire_on_commit=False, join_transaction_mode='create_savepoint')
 

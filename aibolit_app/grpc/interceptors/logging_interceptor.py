@@ -34,12 +34,11 @@ class LoggingInterceptor(AsyncServerInterceptor):
             response = await method(request_or_iterator, context)
 
         except grpc.aio.BaseError as e:
-            await log.aexception('Non-OK Status in controller', exc_info=e)
+            await log.aexception('Non-OK Response Status', exc_info=e)
             raise
         except Exception as e:  # noqa: BLE001
             await log.aerror('Exception in request handler', exc_info=e)
             await context.abort(grpc.StatusCode.UNKNOWN, 'Unknown exception')
-            return None
 
         await log.ainfo(
             'Response',

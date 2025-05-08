@@ -1,7 +1,8 @@
-from datetime import timedelta
-from unittest.mock import MagicMock
+from contextlib import asynccontextmanager
+from datetime import timedelta, timezone
 
 from freezegun import freeze_time
+from google.protobuf.timestamp import Timestamp
 import grpc
 import pytest
 from pytest import fixture
@@ -15,25 +16,23 @@ from aibolit_app.grpc.generated.schedule_pb2 import (
 )
 from aibolit_app.grpc.generated.schedule_pb2_grpc import ScheduleServiceStub
 from aibolit_app.grpc.server import Server
-from aibolit_app.grpc.servicers.schedule_servicer import ScheduleServiceServicer
+from aibolit_app.integrations.schedules_repo import ScheduleRepo
+from aibolit_app.services.schedules_service import ScheduleService
 from tests.utils import zero_day_fixture
 
 pytestmark = pytest.mark.anyio
 
 
-@fixture(autouse=True, scope='session')
-async def server():
-    s = Server(port=50051, servicer=ScheduleServiceServicer())
+@fixture(autouse=True)
+async def server(engine, settings, session):
+    @asynccontextmanager
+    async def mock_session_maker(*args, **kwargs):
+        yield session
+
+    s = Server(port=50051, db_engine=engine, settings=settings, session_maker=mock_session_maker)
     await s.start()
     yield
     await s.stop()
-
-
-@fixture(autouse=True)
-async def patch_session(session, monkeypatch):
-    maker = MagicMock()
-    maker.return_value.__aenter__.return_value = session
-    monkeypatch.setattr('src.grpc.injections.schedule_inject.session_maker', maker)
 
 
 @fixture()
@@ -42,9 +41,20 @@ async def stub():
         yield ScheduleServiceStub(channel=channel)
 
 
+@freeze_time(zero_day_fixture)
 async def test_create_schedule(stub, session):
+    intake_start = Timestamp()
+    intake_start.FromDatetime(zero_day_fixture + timedelta(hours=8))
+    intake_finish = Timestamp()
+    intake_finish.FromDatetime(zero_day_fixture + timedelta(days=2, hours=10))
     response = await stub.CreateSchedule(
-        CreateScheduleRequest(user_id=1, medicine_name='test', intake_period='12', intake_finish=None)
+        CreateScheduleRequest(
+            user_id=1,
+            medicine_name='test',
+            intake_period='0 12 * * *',
+            intake_finish=intake_finish,
+            intake_start=intake_start,
+        )
     )
 
     assert response.id
@@ -66,72 +76,105 @@ async def test_make_schedule(stub, schedule_fixture):
 
 @freeze_time(zero_day_fixture)
 @pytest.mark.parametrize(
-    'schedule_model,schedules_count,days',
+    'next_takings_period, expected',
     [
-        (
-            Schedule(
-                intake_period='10 */6 * * *',
-                medicine_name='',
-                intake_finish=None,
-                user_id=1,
-                intake_start=zero_day_fixture,
-            ),
-            16,
-            timedelta(8),
-        ),
-        (
-            Schedule(
-                intake_period='0 */8 * * *',
-                medicine_name='',
-                intake_finish=None,
-                user_id=1,
-                intake_start=zero_day_fixture,
-            ),
-            12,
-            timedelta(6),
-        ),
-        (
-            Schedule(
-                intake_period='0 */8 * * *',
-                medicine_name='',
-                intake_finish=zero_day_fixture + timedelta(days=3),
-                user_id=1,
-                intake_start=zero_day_fixture - timedelta(days=1),
-            ),
-            6,
-            timedelta(6),
-        ),
-        (
-            Schedule(
-                intake_period='0 */8 * * *',
-                medicine_name='',
-                intake_start=zero_day_fixture,
-                intake_finish=zero_day_fixture + timedelta(days=3, hours=22),
-                user_id=1,
-            ),
-            8,
-            timedelta(6),
-        ),
-        (
-            Schedule(
-                intake_period='0 */8 * * *',
-                medicine_name='',
-                intake_start=zero_day_fixture,
-                intake_finish=zero_day_fixture + timedelta(days=3),
-                user_id=1,
-            ),
-            6,
-            timedelta(6),
-        ),
+        [
+            timedelta(days=1),
+            [
+                (0, zero_day_fixture + timedelta(hours=12, minutes=15)),
+                (0, zero_day_fixture + timedelta(hours=18, minutes=15)),
+                (1, zero_day_fixture + timedelta(hours=8)),
+                (1, zero_day_fixture + timedelta(hours=16)),
+            ],
+        ],
+        [
+            timedelta(days=2),
+            [
+                (0, zero_day_fixture + timedelta(hours=12, minutes=15)),
+                (0, zero_day_fixture + timedelta(hours=18, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=1, hours=12, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=1, hours=18, minutes=15)),
+                (1, zero_day_fixture + timedelta(hours=8)),
+                (1, zero_day_fixture + timedelta(hours=16)),
+                (1, zero_day_fixture + timedelta(days=1, hours=8)),
+                (1, zero_day_fixture + timedelta(days=1, hours=16)),
+            ],
+        ],
+        [
+            timedelta(days=3),
+            [
+                (0, zero_day_fixture + timedelta(hours=12, minutes=15)),
+                (0, zero_day_fixture + timedelta(hours=18, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=1, hours=12, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=1, hours=18, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=2, hours=12, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=2, hours=18, minutes=15)),
+                (1, zero_day_fixture + timedelta(hours=8)),
+                (1, zero_day_fixture + timedelta(hours=16)),
+                (1, zero_day_fixture + timedelta(days=1, hours=8)),
+                (1, zero_day_fixture + timedelta(days=1, hours=16)),
+                (1, zero_day_fixture + timedelta(days=2, hours=8)),
+                (1, zero_day_fixture + timedelta(days=2, hours=16)),
+            ],
+        ],
+        [
+            timedelta(days=4),
+            [
+                (0, zero_day_fixture + timedelta(hours=12, minutes=15)),
+                (0, zero_day_fixture + timedelta(hours=18, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=1, hours=12, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=1, hours=18, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=2, hours=12, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=2, hours=18, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=3, hours=12, minutes=15)),
+                (0, zero_day_fixture + timedelta(days=3, hours=18, minutes=15)),
+                (1, zero_day_fixture + timedelta(hours=8)),
+                (1, zero_day_fixture + timedelta(hours=16)),
+                (1, zero_day_fixture + timedelta(days=1, hours=8)),
+                (1, zero_day_fixture + timedelta(days=1, hours=16)),
+                (1, zero_day_fixture + timedelta(days=2, hours=8)),
+                (1, zero_day_fixture + timedelta(days=2, hours=16)),
+            ],
+        ],
     ],
 )
-async def test_next_takings(stub, schedule_model, session, schedules_count, days, monkeypatch):
-    settings_mock = MagicMock()
-    settings_mock.NEXT_TAKINGS_PERIOD = days
-    monkeypatch.setattr('src.grpc.injections.schedule_inject.settings', settings_mock)
+async def test_next_takings(stub, session, next_takings_period, expected, settings, monkeypatch):
+    settings.next_takings_period = next_takings_period
 
-    schedule = schedule_model
-    session.add(schedule)
+    @asynccontextmanager
+    async def mock_schedule_service_dependency(self):
+        yield ScheduleService(
+            ScheduleRepo(session, self._settings.schedule_lowest_bound, self._settings.schedule_highest_bound),
+            self._settings.next_takings_period,
+        )
+
+    monkeypatch.setattr(
+        'aibolit_app.grpc.servicers.schedule_servicer.ScheduleServiceServicer.schedule_service_dependency',
+        mock_schedule_service_dependency,
+    )
+
+    schedule_fixture = [
+        Schedule(
+            intake_period='10 */6 * * *',
+            medicine_name='0',
+            intake_finish=None,
+            user_id=1,
+            intake_start=zero_day_fixture,
+        ),
+        Schedule(
+            intake_period='0 */8 * * *',
+            medicine_name='1',
+            intake_start=zero_day_fixture - timedelta(days=1),
+            intake_finish=zero_day_fixture + timedelta(days=3),
+            user_id=1,
+        ),
+    ]
+    for schedule in schedule_fixture:
+        session.add(schedule)
     await session.commit()
-    response = await stub.GetNextTakings(GetNextTakingsRequest(user_id=schedule.user_id))
-    assert len(response.items) == schedules_count
+
+    response = await stub.GetNextTakings(GetNextTakingsRequest(user_id=1))
+    assert len(response.items) == len(expected)
+    for takings, (schedule_idx, expected_datetime) in zip(response.items, expected):
+        assert takings.id == schedule_fixture[schedule_idx].id
+        assert takings.medicine_datetime.ToDatetime(timezone.utc) == expected_datetime
