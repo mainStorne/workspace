@@ -25,12 +25,12 @@ RUN --mount=from=uv,source=/uv,target=/bin/uv \
 
 FROM base AS runner
 COPY --from=builder ${VENV_PATH} ${VENV_PATH}
-ENV PORT=8080
-COPY api api
+COPY aibolit_app aibolit_app
 COPY alembic.sh .
 COPY alembic.ini .
+ADD logging.yaml
 
 RUN chmod +x alembic.sh
 
 ENTRYPOINT [ "/app/alembic.sh" ]
-CMD uvicorn api:app --port ${PORT} --host 0.0.0.0
+CMD uvicorn aibolit_app:make_app --factory --no-server-header --proxy-headers --workers 1 --port 80 --host 0.0.0.0 --log-config logging.yaml

@@ -1,36 +1,36 @@
 from datetime import time, timedelta
 from unittest.mock import AsyncMock
 
-import pytest
 from freezegun import freeze_time
 from pydantic import ValidationError
+import pytest
 from structlog.contextvars import bind_contextvars
 
-from src.api.schemas.schedules import ScheduleCreate
-from src.db.schedules import Schedule
-from src.integrations.schedules_repo import ScheduleRepo
+from aibolit_app.api.schemas.schedules import ScheduleCreate
+from aibolit_app.db.schedules import Schedule
+from aibolit_app.integrations.schedules_repo import ScheduleRepo
 from tests.utils import zero_day_fixture
 
 
 @pytest.mark.parametrize(
-    "cron",
+    'cron',
     [
-        "23",  # intake period in 8 or 22 hours
-        "24",
-        "7",
-        "5",
+        '23',  # intake period in 8 or 22 hours
+        '24',
+        '7',
+        '5',
     ],
 )
 def test_wrong_cron_syntax_schedules(cron):
     with pytest.raises(ValidationError):
-        ScheduleCreate(medicine_name="name", intake_period=cron, intake_finish=None, user_id=2)
+        ScheduleCreate(medicine_name='name', intake_period=cron, intake_finish=None, user_id=2)
 
 
 def test_finish_time_greater_then_start_time():
     with pytest.raises(ValidationError):
         ScheduleCreate(
-            medicine_name="name",
-            intake_period="*",
+            medicine_name='name',
+            intake_period='*',
             intake_finish=zero_day_fixture - timedelta(days=1),
             intake_start=zero_day_fixture,
             user_id=2,
@@ -39,16 +39,16 @@ def test_finish_time_greater_then_start_time():
 
 @freeze_time(zero_day_fixture)
 @pytest.mark.parametrize(
-    "intake_period,intake_start,intake_finish, expected_schedules_datetime",
+    'intake_period,intake_start,intake_finish, expected_schedules_datetime',
     [
         (
-            "15 20 * * *",
+            '15 20 * * *',
             zero_day_fixture,
             None,
             [zero_day_fixture.replace(hour=20, minute=15)],
         ),
         (
-            "*/5 21 * * *",
+            '*/5 21 * * *',
             zero_day_fixture,
             None,
             [
@@ -59,7 +59,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            "0 * * * *",
+            '0 * * * *',
             zero_day_fixture,
             None,
             [
@@ -81,7 +81,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            "0 * * * *",
+            '0 * * * *',
             zero_day_fixture + timedelta(hours=6),
             zero_day_fixture + timedelta(hours=8),
             [
@@ -89,13 +89,13 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            "0 * * * *",
+            '0 * * * *',
             zero_day_fixture + timedelta(hours=22),
             zero_day_fixture + timedelta(hours=23),
             [zero_day_fixture.replace(hour=22, minute=00)],
         ),
         (
-            "0 9-15 * * *",
+            '0 9-15 * * *',
             zero_day_fixture,
             None,
             [
@@ -109,7 +109,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            "0 * * * *",
+            '0 * * * *',
             zero_day_fixture + timedelta(hours=10),
             zero_day_fixture + timedelta(hours=23),
             [
@@ -129,7 +129,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            "0 * * * *",
+            '0 * * * *',
             zero_day_fixture + timedelta(hours=20),
             zero_day_fixture + timedelta(hours=23),
             [
@@ -140,13 +140,13 @@ def test_finish_time_greater_then_start_time():
         ),
         (
             # schedule on the next day
-            f"0 * {(zero_day_fixture + timedelta(days=1)).day} * *",
+            f'0 * {(zero_day_fixture + timedelta(days=1)).day} * *',
             zero_day_fixture,
             None,
             [],
         ),
         (
-            "7 11-15 * * *",
+            '7 11-15 * * *',
             zero_day_fixture,
             None,
             [
@@ -158,7 +158,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            "7 11-15 * * *",
+            '7 11-15 * * *',
             zero_day_fixture,
             zero_day_fixture + timedelta(hours=14),
             [
@@ -168,7 +168,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            "*/50 * * * *",
+            '*/50 * * * *',
             zero_day_fixture,
             None,
             [
@@ -190,7 +190,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            f"*/50 * {zero_day_fixture.day} {zero_day_fixture.month} {zero_day_fixture.weekday() + 1},5",
+            f'*/50 * {zero_day_fixture.day} {zero_day_fixture.month} {zero_day_fixture.weekday() + 1},5',
             zero_day_fixture,
             None,
             [
@@ -212,7 +212,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            f"*/50 * {zero_day_fixture.day}-15 {zero_day_fixture.month}-10,11 {zero_day_fixture.weekday() + 1},5",
+            f'*/50 * {zero_day_fixture.day}-15 {zero_day_fixture.month}-10,11 {zero_day_fixture.weekday() + 1},5',
             zero_day_fixture,
             None,
             [
@@ -234,7 +234,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            f"*/50 * {zero_day_fixture.day} {zero_day_fixture.month} {zero_day_fixture.weekday() + 1}",
+            f'*/50 * {zero_day_fixture.day} {zero_day_fixture.month} {zero_day_fixture.weekday() + 1}',
             zero_day_fixture,
             None,
             [
@@ -256,7 +256,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            "0 10,20 * * *",
+            '0 10,20 * * *',
             zero_day_fixture,
             None,
             [
@@ -265,7 +265,7 @@ def test_finish_time_greater_then_start_time():
             ],
         ),
         (
-            "10 */8 * * *",
+            '10 */8 * * *',
             zero_day_fixture,
             None,
             [
@@ -286,7 +286,7 @@ def test_schedule(
     """  # noqa: RUF002
 
     schedule_db = Schedule(
-        medicine_name="", user_id=1, intake_period=intake_period, intake_finish=intake_finish, intake_start=intake_start
+        medicine_name='', user_id=1, intake_period=intake_period, intake_finish=intake_finish, intake_start=intake_start
     )
     schedule_repo = ScheduleRepo(AsyncMock(), time(hour=8), time(hour=22))
     schedule_and_scheduled_datetime = list(schedule_repo.schedule(schedule_db))
@@ -298,7 +298,7 @@ def test_schedule(
 @freeze_time(zero_day_fixture)
 @pytest.mark.anyio
 @pytest.mark.parametrize(
-    "start_datetime, stop_datetime, expected",
+    'start_datetime, stop_datetime, expected',
     [
         (
             zero_day_fixture - timedelta(days=3),
@@ -327,23 +327,23 @@ async def test_next_takings(start_datetime, stop_datetime, expected):
     mock_session = AsyncMock()
     schedule_fixture = [
         Schedule(
-            medicine_name="0",
+            medicine_name='0',
             user_id=1,
-            intake_period="0 12 * * *",
+            intake_period='0 12 * * *',
             intake_start=zero_day_fixture,
             intake_finish=zero_day_fixture + timedelta(days=5, hours=12),
         ),
         Schedule(
-            medicine_name="1",
+            medicine_name='1',
             user_id=1,
-            intake_period="15 9,18 * * *",
+            intake_period='15 9,18 * * *',
             intake_start=zero_day_fixture - timedelta(days=1),
             intake_finish=None,
         ),
         Schedule(
-            medicine_name="2",
+            medicine_name='2',
             user_id=1,
-            intake_period="0 8,14,18 */7 * *",
+            intake_period='0 8,14,18 */7 * *',
             intake_start=zero_day_fixture,
             intake_finish=zero_day_fixture + timedelta(days=30),
         ),
@@ -360,7 +360,7 @@ async def test_next_takings(start_datetime, stop_datetime, expected):
 
 @pytest.mark.anyio
 @pytest.mark.parametrize(
-    "start_datetime, stop_datetime, expected",
+    'start_datetime, stop_datetime, expected',
     [
         (
             zero_day_fixture + timedelta(days=1),
@@ -378,16 +378,16 @@ async def test_next_takings(start_datetime, stop_datetime, expected):
 async def test_next_takings_bound_values(start_datetime, stop_datetime, expected):
     schedule_fixture = [
         Schedule(
-            medicine_name="",
+            medicine_name='',
             user_id=1,
-            intake_period="0 12 * * *",
+            intake_period='0 12 * * *',
             intake_start=zero_day_fixture,
             intake_finish=zero_day_fixture + timedelta(days=5, hours=12),
         ),
         Schedule(  # filtered out with schedule_lowest_bound
-            medicine_name="1",
+            medicine_name='1',
             user_id=1,
-            intake_period="0 6 * * *",
+            intake_period='0 6 * * *',
             intake_start=zero_day_fixture + timedelta(days=1),
             intake_finish=zero_day_fixture + timedelta(days=4),
         ),
@@ -406,7 +406,7 @@ async def test_next_takings_bound_values(start_datetime, stop_datetime, expected
 
 @pytest.mark.anyio
 @pytest.mark.parametrize(
-    "start_datetime, stop_datetime, expected",
+    'start_datetime, stop_datetime, expected',
     [
         (
             zero_day_fixture + timedelta(days=1),
@@ -429,16 +429,16 @@ async def test_next_takings_bound_values(start_datetime, stop_datetime, expected
 async def test_next_takings_overlap_schedules(start_datetime, stop_datetime, expected):
     schedule_fixture = [
         Schedule(
-            medicine_name="0",
+            medicine_name='0',
             user_id=1,
-            intake_period="0 12 * * *",
+            intake_period='0 12 * * *',
             intake_start=zero_day_fixture,
             intake_finish=zero_day_fixture + timedelta(days=5, hours=12),
         ),
         Schedule(
-            medicine_name="1",
+            medicine_name='1',
             user_id=1,
-            intake_period="0 12 * * *",
+            intake_period='0 12 * * *',
             intake_start=zero_day_fixture,
             intake_finish=zero_day_fixture + timedelta(days=5, hours=12),
         ),

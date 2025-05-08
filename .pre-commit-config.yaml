@@ -1,18 +1,48 @@
+---
+default_install_hook_types:
+  - pre-commit
+  - pre-push
+
 repos:
+  - repo: local
+    hooks:
+      - id: tests
+        stages: [pre-push]
+        language: system
+        name: tests
+        pass_filenames: false
+        entry: just tests
+
+      - id: linters
+        name: linters
+        stages: [pre-commit]
+        language: system
+        pass_filenames: false
+        entry: just lint
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: "v5.0.0"
     hooks:
-      - id: check-case-conflict
+      - id: check-added-large-files
       - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-toml
+      - id: check-yaml
+      - id: double-quote-string-fixer
       - id: end-of-file-fixer
+      - id: name-tests-test
+        files: ^(tests)/.+\.py$
+        exclude: ^(tests).+(factories|mock|util|constant|fixtur).*(\.py)$
+        args:
+          - "--pytest-test-first"
       - id: trailing-whitespace
+        exclude: ^.+(\.md)$
+      - id: check-case-conflict
       - id: check-json
         exclude: ^(\.vscode/launch\.json|\.devcontainer/devcontainer\.json)$
       - id: pretty-format-json
         exclude: ^(\.vscode/launch\.json|\.devcontainer/devcontainer\.json)$
         args: [--autofix]
-      - id: check-toml
-      - id: check-yaml
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.6.3"

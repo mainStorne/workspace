@@ -1,78 +1,73 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/python
 {
-    "name": "project",
-    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-    // Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "uv sync --all-groups && uv run pre-commit install --install-hooks && uv run alembic upgrade head && POSTGRES_DB=test uv run alembic upgrade head",
-
-    // Configure tool-specific properties.
-
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"dockerComposeFile": ["../docker-compose.dev.yaml"],
-
-	"service": "devcontainer",
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
-
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [8080, 8002, 5432, 50051],
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "cd api && uv sync --group tests",
-
-	// Configure tool-specific properties.
-	"customizations": {
-		// Configure properties specific to VS Code.
-		"vscode": {
-			"settings": {
-				"git.enabled": true,
-                "python.testing.pytestArgs": ["tests"],
-                "python.testing.unittestEnabled": false,
-                "python.testing.pytestEnabled": true,
-                "python.defaultInterpreterPath": "/workspaces/.venv/bin/python",
-                "python.testing.pytestPath": "/workspaces/.venv/bin/pytest"
-            },
-			"extensions": [
-                "github.vscode-pull-request-github",
-                "streetsidesoftware.code-spell-checker",
-                "charliermarsh.ruff",
-                "streetsidesoftware.code-spell-checker-russian",
-                "tamasfe.even-better-toml",
-                "github.vscode-github-actions",
-                "me-dutour-mathieu.vscode-github-actions",
-                "IronGeek.vscode-env",
-                "bierner.docs-view",
-                "DavidAnson.vscode-markdownlint",
-                "wmaurer.vscode-jumpy",
-                "tumuerzunong.pycharm-like-snippets",
-                "sankethdev.vscode-proto",
-                "EditorConfig.EditorConfig"
-            ]
-		}
-	},
-	"features": {
-		"ghcr.io/devcontainers/features/git:1": {
-			"version": "latest"
-		},
-		"ghcr.io/prulloac/devcontainer-features/pre-commit:1": {
-			"version": "latest"
-		},
-		"ghcr.io/jsburckhardt/devcontainer-features/uv:1": {
-			"version": "latest"
-		},
-		"ghcr.io/jsburckhardt/devcontainer-features/ruff:1": {
-			"version": "latest"
-		},
-		"ghcr.io/guiyomh/features/just:0": {
-			"version": "latest"
-		}
-
-
-
-
-
-
-	},
-	"workspaceFolder": "/workspace"
+  "name": "project",
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  // Use 'postCreateCommand' to run commands after the container is created.
+  "postCreateCommand": "uv sync --all-groups && uv run pre-commit install --install-hooks && uv run alembic upgrade head && POSTGRES_DB=test uv run alembic upgrade head",
+  // Configure tool-specific properties.
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  "dockerComposeFile": [
+    "../docker-compose.dev.yaml"
+  ],
+  "service": "devcontainer",
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  // "features": {},
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [
+    8080,
+    8002,
+    5432,
+    50051
+  ],
+  // Use 'postCreateCommand' to run commands after the container is created.
+  // "postCreateCommand": "cd api && uv sync --group tests",
+  // Configure tool-specific properties.
+  "customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+      "settings": {
+        "git.enabled": true,
+        "python.testing.pytestArgs": [
+          "tests"
+        ],
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestEnabled": true,
+        "python.defaultInterpreterPath": "/workspaces/.venv/bin/python",
+        "python.testing.pytestPath": "/workspaces/.venv/bin/pytest"
+      },
+      "extensions": [
+        "github.vscode-pull-request-github",
+        "streetsidesoftware.code-spell-checker",
+        "charliermarsh.ruff",
+        "streetsidesoftware.code-spell-checker-russian",
+        "tamasfe.even-better-toml",
+        "github.vscode-github-actions",
+        "me-dutour-mathieu.vscode-github-actions",
+        "IronGeek.vscode-env",
+        "bierner.docs-view",
+        "DavidAnson.vscode-markdownlint",
+        "wmaurer.vscode-jumpy",
+        "tumuerzunong.pycharm-like-snippets",
+        "sankethdev.vscode-proto",
+        "EditorConfig.EditorConfig",
+        "sclu1034.justfile"
+      ]
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    "ghcr.io/prulloac/devcontainer-features/pre-commit:1": {
+      "version": "latest"
+    },
+    "ghcr.io/jsburckhardt/devcontainer-features/uv:1": {
+      "version": "latest"
+    },
+    "ghcr.io/guiyomh/features/just:0": {
+      "version": "latest"
+    }
+  },
+  "workspaceFolder": "/workspace"
 }

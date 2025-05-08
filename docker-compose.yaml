@@ -24,7 +24,6 @@ services:
     ports: ["80:80", "50051:50051"]
     restart: always
     environment:
-      - PORT=80
       - POSTGRES_HOST=db
 
 

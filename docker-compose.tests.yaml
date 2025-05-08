@@ -21,6 +21,5 @@ services:
     env_file:
       - .env
     environment:
-      - PORT=80
       - POSTGRES_HOST=db
       - POSTGRES_DB=test
