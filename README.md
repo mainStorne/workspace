@@ -22,7 +22,7 @@
     -H 'Content-Type: application/json' \
     -d '{
     "medicine_name": "string",
-    "intake_period": "*",
+    "intake_period": "0 12 * * *",
     "user_id": 0,
     "intake_finish": "2025-10-01T13:34:55.595Z"
     }'

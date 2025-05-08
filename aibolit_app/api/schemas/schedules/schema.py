@@ -1,4 +1,4 @@
-from datetime import datetime, time, timezone
+from datetime import time
 
 from crontab import CronTab
 from pydantic import field_validator, model_validator
@@ -12,13 +12,6 @@ class ScheduleCreate(_ScheduleCreate):
         if self.intake_finish is not None and self.intake_finish <= self.intake_start:
             raise ValueError("intake_finish can't be less then intake_start!")  # noqa: TRY003
         return self
-
-    @field_validator('intake_start', mode='after')
-    @classmethod
-    def validate_intake_start(cls, value: datetime):
-        if value < datetime.now(timezone.utc):
-            raise ValueError("intake_start can't be less then now datetime")  # noqa: TRY003
-        return value
 
     def validate_bound_datetime(self, lowest: time, highest: time) -> None:
         """
