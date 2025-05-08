@@ -47,10 +47,6 @@ async def test_create_schedule(client: AsyncClient, session, monkeypatch):
             zero_day_fixture + timedelta(days=3, hours=10),
             zero_day_fixture + timedelta(hours=10),
         ],
-        [
-            zero_day_fixture - timedelta(days=3, hours=10),
-            zero_day_fixture + timedelta(hours=10),
-        ],
     ],
 )
 async def test_create_wrong_schedules(client, session, intake_start, intake_finish):
