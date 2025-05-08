@@ -7,44 +7,42 @@ readme = "README.md"
 keywords = ['python']
 requires-python = ">=3.11"
 classifiers = [
-    "Intended Audience :: Developers",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Topic :: Software Development :: Libraries :: Python Modules",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "alembic>=1.15.1",
-    "asyncpg>=0.30.0",
-    "crontab>=1.0.1",
-    "datamodel-code-generator>=0.30.0",
-    "fastapi>=0.115.11",
-    "fastapi-sqlalchemy-toolkit>=0.7.12",
-    "geoalchemy2>=0.17.1",
-    "grpc-interceptor>=0.15.4",
-    "grpcio>=1.71.0",
-    "grpcio-tools>=1.71.0",
-    "ipykernel>=6.29.5",
-    "polyfactory>=2.21.0",
-    "protobuf>=5.29.4",
-    "pydantic-settings>=2.8.1",
-    "sqlmodel>=0.0.24",
-    "structlog>=25.3.0",
-    "uvicorn>=0.34.0",
+  "alembic>=1.15.1",
+  "asyncpg>=0.30.0",
+  "crontab>=1.0.1",
+  "datamodel-code-generator>=0.30.0",
+  "fastapi>=0.115.11",
+  "fastapi-sqlalchemy-toolkit>=0.7.12",
+  "geoalchemy2>=0.17.1",
+  "grpc-interceptor>=0.15.4",
+  "grpcio>=1.71.0",
+  "grpcio-tools>=1.71.0",
+  "ipykernel>=6.29.5",
+  "polyfactory>=2.21.0",
+  "protobuf>=5.29.4",
+  "pydantic-settings>=2.8.1",
+  "sqlmodel>=0.0.24",
+  "structlog>=25.3.0",
+  "uvicorn>=0.34.0",
 ]
 
 
 [dependency-groups]
 dev = [
-    "pytest>=7.2.0",
-    "httpx>=0.28.1",
-    "freezegun>=1.5.1",
-    "pytest-cov>=6.1.1",
+  "pytest>=7.2.0",
+  "httpx>=0.28.1",
+  "freezegun>=1.5.1",
+  "pytest-cov>=6.1.1",
 ]
-
-
 
 
 [tool.pytest.ini_options]
@@ -57,44 +55,50 @@ fix = true
 
 [tool.ruff.lint]
 select = [
-    # flake8-2020
-    "YTT",
-    # flake8-bandit
-    "S",
-    # flake8-bugbear
-    "B",
-    # flake8-builtins
-    "A",
-    # flake8-comprehensions
-    "C4",
-    # flake8-debugger
-    "T10",
-    # flake8-simplify
-    "SIM",
-    # isort
-    "I",
-    # mccabe
-    "C90",
-    # pycodestyle
-    "E", "W",
-    # pyflakes
-    "F",
-    # pygrep-hooks
-    "PGH",
-    # pyupgrade
-    "UP",
-    # ruff
-    "RUF",
-    # tryceratops
-    "TRY",
-    "F401",
+  # flake8-2020
+  "YTT",
+  # flake8-bandit
+  "S",
+  # flake8-bugbear
+  "B",
+  # flake8-builtins
+  "A",
+  # flake8-comprehensions
+  "C4",
+  # flake8-debugger
+  "T10",
+  # flake8-simplify
+  "SIM",
+  # isort
+  "I",
+  # mccabe
+  "C90",
+  # pycodestyle
+  "E",
+  "W",
+  # pyflakes
+  "F",
+  # pygrep-hooks
+  "PGH",
+  # pyupgrade
+  "UP",
+  # ruff
+  "RUF",
+  # tryceratops
+  "TRY",
+  "F401",
 ]
 ignore = [
-    # LineTooLong
-    "E501",
-    # DoNotAssignLambda
-    "E731",
+  # LineTooLong
+  "E501",
+  # DoNotAssignLambda
+  "E731",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]
+
+
+[tool.coverage.run]
+branch = true
+omit = ["tests/*"]

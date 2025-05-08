@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import Depends, FastAPI, Header
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
+from structlog import get_logger
 
 from src.api.middlewares.logging_middleware import LoggingMiddleware
 from src.api.transports.views.schedules import views
@@ -18,6 +19,8 @@ from src.settings import get_env_settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging()
+    log = get_logger()
+    await log.ainfo("API is starting")
     settings = get_env_settings()
     db_engine = create_async_engine(settings.database.sqlalchemy_url)
     db_sessionmaker = async_sessionmaker(db_engine, expire_on_commit=False, class_=AsyncSession)
@@ -27,6 +30,7 @@ async def lifespan(app: FastAPI):
     yield {"db_engine": db_engine, "db_sessionmaker": db_sessionmaker}
     await db_engine.dispose()
     await server.stop()
+    await log.ainfo("API is stopping")
 
 
 def add_trace_documentation(

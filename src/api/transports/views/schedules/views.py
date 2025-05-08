@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from src.api.depends import ScheduleServiceDependency
+from src.api.depends import EnvSettingsDependency, ScheduleServiceDependency
 from src.api.schemas.schedules import ScheduleCard, ScheduleCreate, ScheduleRead, TakingsRead
 from src.services.schedules_service import ScheduleExpiredException, ScheduleNotFoundException
 
@@ -19,7 +19,13 @@ async def schedules(user_id: int, schedule_repository: ScheduleServiceDependency
 
 
 @r.post("/schedule")
-async def create(schedule_repository: ScheduleServiceDependency, schedule: ScheduleCreate) -> ScheduleRead:
+async def create(
+    schedule_repository: ScheduleServiceDependency, schedule: ScheduleCreate, settings: EnvSettingsDependency
+) -> ScheduleRead:
+    try:
+        schedule.validate_bound_datetime(settings.schedule_lowest_bound, settings.schedule_highest_bound)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))  # noqa: B904
     schedule_id = await schedule_repository.create(schedule=schedule)
     return {"id": schedule_id}
 

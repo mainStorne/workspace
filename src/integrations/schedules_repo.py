@@ -65,9 +65,6 @@ class ScheduleRepo(IScheduleRepo):
 
             if start > stop:
                 break
-            if start == stop:  # include stop time in scheduling
-                yield start
-                break
 
             start_time = start.time()
             if self._schedule_lowest_bound > start_time or self._schedule_highest_bound < start_time:

@@ -21,4 +21,5 @@ class Server:
         await self._server.start()
 
     async def stop(self):
+        await log.ainfo("gRPC server is stopping")
         await self._server.stop(None)

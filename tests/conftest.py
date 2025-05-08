@@ -2,6 +2,8 @@ from datetime import timedelta
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from pydantic._internal._generate_schema import GenerateSchema
+from pydantic_core import core_schema
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -10,7 +12,7 @@ from src import app
 from src.api.depends import get_db_depends
 from src.conf import settings
 from src.db import Schedule
-from tests.utils import day_with_zero_hour
+from tests.utils import zero_day_fixture
 
 pytestmark = pytest.mark.anyio
 settings.database.db = "test"
@@ -18,6 +20,20 @@ engine = create_async_engine(settings.database.sqlalchemy_url, plugins=["geoalch
 session_maker = async_sessionmaker(
     bind=engine, expire_on_commit=False, join_transaction_mode="create_savepoint", class_=AsyncSession
 )
+
+
+initial_match_type = GenerateSchema.match_type
+
+# fix pydantic patch error https://github.com/pydantic/pydantic/discussions/9343
+
+
+def match_type(self, obj):
+    if getattr(obj, "__name__", None) == "datetime":
+        return core_schema.datetime_schema()
+    return initial_match_type(self, obj)
+
+
+GenerateSchema.match_type = match_type
 
 
 @pytest.fixture()
@@ -47,13 +63,13 @@ async def session():
 
 
 @pytest.fixture()
-async def schedule(session):
+async def schedule_fixture(session):
     _schedule = Schedule(
         medicine_name="test",
         intake_period="8 12 * * *",
         user_id=1,
-        intake_finish=day_with_zero_hour + timedelta(days=1),
-        intake_start=day_with_zero_hour,
+        intake_finish=zero_day_fixture + timedelta(days=1),
+        intake_start=zero_day_fixture,
     )
     session.add(_schedule)
     await session.commit()

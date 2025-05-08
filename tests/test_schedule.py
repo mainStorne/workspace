@@ -9,7 +9,7 @@ from structlog.contextvars import bind_contextvars
 from src.api.schemas.schedules import ScheduleCreate
 from src.db.schedules import Schedule
 from src.integrations.schedules_repo import ScheduleRepo
-from tests.utils import day_with_zero_hour
+from tests.utils import zero_day_fixture
 
 
 @pytest.mark.parametrize(
@@ -31,281 +31,247 @@ def test_finish_time_greater_then_start_time():
         ScheduleCreate(
             medicine_name="name",
             intake_period="*",
-            intake_finish=day_with_zero_hour - timedelta(days=1),
-            intake_start=day_with_zero_hour,
+            intake_finish=zero_day_fixture - timedelta(days=1),
+            intake_start=zero_day_fixture,
             user_id=2,
         )
 
 
-@freeze_time(day_with_zero_hour)
+@freeze_time(zero_day_fixture)
 @pytest.mark.parametrize(
-    "intake_period,intake_start,intake_finish, expected_schedules_datetime, schedule_lowest_bound,schedule_highest_bound",
+    "intake_period,intake_start,intake_finish, expected_schedules_datetime",
     [
         (
             "15 20 * * *",
-            day_with_zero_hour,
+            zero_day_fixture,
             None,
-            [day_with_zero_hour.replace(hour=20, minute=15)],
-            time(hour=8),
-            time(hour=22),
+            [zero_day_fixture.replace(hour=20, minute=15)],
         ),
         (
             "*/5 21 * * *",
-            day_with_zero_hour,
+            zero_day_fixture,
             None,
             [
-                day_with_zero_hour.replace(hour=21, minute=00),
-                day_with_zero_hour.replace(hour=21, minute=15),
-                day_with_zero_hour.replace(hour=21, minute=30),
-                day_with_zero_hour.replace(hour=21, minute=45),
+                zero_day_fixture.replace(hour=21, minute=00),
+                zero_day_fixture.replace(hour=21, minute=15),
+                zero_day_fixture.replace(hour=21, minute=30),
+                zero_day_fixture.replace(hour=21, minute=45),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             "0 * * * *",
-            day_with_zero_hour,
+            zero_day_fixture,
             None,
             [
-                day_with_zero_hour.replace(hour=8, minute=00),
-                day_with_zero_hour.replace(hour=9, minute=00),
-                day_with_zero_hour.replace(hour=10, minute=00),
-                day_with_zero_hour.replace(hour=11, minute=00),
-                day_with_zero_hour.replace(hour=12, minute=00),
-                day_with_zero_hour.replace(hour=13, minute=00),
-                day_with_zero_hour.replace(hour=14, minute=00),
-                day_with_zero_hour.replace(hour=15, minute=00),
-                day_with_zero_hour.replace(hour=16, minute=00),
-                day_with_zero_hour.replace(hour=17, minute=00),
-                day_with_zero_hour.replace(hour=18, minute=00),
-                day_with_zero_hour.replace(hour=19, minute=00),
-                day_with_zero_hour.replace(hour=20, minute=00),
-                day_with_zero_hour.replace(hour=21, minute=00),
-                day_with_zero_hour.replace(hour=22, minute=00),
+                zero_day_fixture.replace(hour=8, minute=00),
+                zero_day_fixture.replace(hour=9, minute=00),
+                zero_day_fixture.replace(hour=10, minute=00),
+                zero_day_fixture.replace(hour=11, minute=00),
+                zero_day_fixture.replace(hour=12, minute=00),
+                zero_day_fixture.replace(hour=13, minute=00),
+                zero_day_fixture.replace(hour=14, minute=00),
+                zero_day_fixture.replace(hour=15, minute=00),
+                zero_day_fixture.replace(hour=16, minute=00),
+                zero_day_fixture.replace(hour=17, minute=00),
+                zero_day_fixture.replace(hour=18, minute=00),
+                zero_day_fixture.replace(hour=19, minute=00),
+                zero_day_fixture.replace(hour=20, minute=00),
+                zero_day_fixture.replace(hour=21, minute=00),
+                zero_day_fixture.replace(hour=22, minute=00),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             "0 * * * *",
-            day_with_zero_hour + timedelta(hours=6),
-            day_with_zero_hour + timedelta(hours=8),
+            zero_day_fixture + timedelta(hours=6),
+            zero_day_fixture + timedelta(hours=8),
             [
-                day_with_zero_hour.replace(hour=8, minute=0),
+                zero_day_fixture.replace(hour=8, minute=0),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             "0 * * * *",
-            day_with_zero_hour + timedelta(hours=22),
-            day_with_zero_hour + timedelta(hours=23),
-            [day_with_zero_hour.replace(hour=22, minute=00)],
-            time(hour=8),
-            time(hour=22),
+            zero_day_fixture + timedelta(hours=22),
+            zero_day_fixture + timedelta(hours=23),
+            [zero_day_fixture.replace(hour=22, minute=00)],
         ),
         (
             "0 9-15 * * *",
-            day_with_zero_hour,
+            zero_day_fixture,
             None,
             [
-                day_with_zero_hour.replace(hour=9, minute=00),
-                day_with_zero_hour.replace(hour=10, minute=00),
-                day_with_zero_hour.replace(hour=11, minute=00),
-                day_with_zero_hour.replace(hour=12, minute=00),
-                day_with_zero_hour.replace(hour=13, minute=00),
-                day_with_zero_hour.replace(hour=14, minute=00),
-                day_with_zero_hour.replace(hour=15, minute=00),
+                zero_day_fixture.replace(hour=9, minute=00),
+                zero_day_fixture.replace(hour=10, minute=00),
+                zero_day_fixture.replace(hour=11, minute=00),
+                zero_day_fixture.replace(hour=12, minute=00),
+                zero_day_fixture.replace(hour=13, minute=00),
+                zero_day_fixture.replace(hour=14, minute=00),
+                zero_day_fixture.replace(hour=15, minute=00),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             "0 * * * *",
-            day_with_zero_hour + timedelta(hours=10),
-            day_with_zero_hour + timedelta(hours=23),
+            zero_day_fixture + timedelta(hours=10),
+            zero_day_fixture + timedelta(hours=23),
             [
-                day_with_zero_hour.replace(hour=10, minute=00),
-                day_with_zero_hour.replace(hour=11, minute=00),
-                day_with_zero_hour.replace(hour=12, minute=00),
-                day_with_zero_hour.replace(hour=13, minute=00),
-                day_with_zero_hour.replace(hour=14, minute=00),
-                day_with_zero_hour.replace(hour=15, minute=00),
-                day_with_zero_hour.replace(hour=16, minute=00),
-                day_with_zero_hour.replace(hour=17, minute=00),
-                day_with_zero_hour.replace(hour=18, minute=00),
-                day_with_zero_hour.replace(hour=19, minute=00),
-                day_with_zero_hour.replace(hour=20, minute=00),
-                day_with_zero_hour.replace(hour=21, minute=00),
-                day_with_zero_hour.replace(hour=22, minute=00),
+                zero_day_fixture.replace(hour=10, minute=00),
+                zero_day_fixture.replace(hour=11, minute=00),
+                zero_day_fixture.replace(hour=12, minute=00),
+                zero_day_fixture.replace(hour=13, minute=00),
+                zero_day_fixture.replace(hour=14, minute=00),
+                zero_day_fixture.replace(hour=15, minute=00),
+                zero_day_fixture.replace(hour=16, minute=00),
+                zero_day_fixture.replace(hour=17, minute=00),
+                zero_day_fixture.replace(hour=18, minute=00),
+                zero_day_fixture.replace(hour=19, minute=00),
+                zero_day_fixture.replace(hour=20, minute=00),
+                zero_day_fixture.replace(hour=21, minute=00),
+                zero_day_fixture.replace(hour=22, minute=00),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             "0 * * * *",
-            day_with_zero_hour + timedelta(hours=20),
-            day_with_zero_hour + timedelta(hours=23),
+            zero_day_fixture + timedelta(hours=20),
+            zero_day_fixture + timedelta(hours=23),
             [
-                day_with_zero_hour.replace(hour=20, minute=00),
-                day_with_zero_hour.replace(hour=21, minute=00),
-                day_with_zero_hour.replace(hour=22, minute=00),
+                zero_day_fixture.replace(hour=20, minute=00),
+                zero_day_fixture.replace(hour=21, minute=00),
+                zero_day_fixture.replace(hour=22, minute=00),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             # schedule on the next day
-            f"0 * {(day_with_zero_hour + timedelta(days=1)).day} * *",
-            day_with_zero_hour,
+            f"0 * {(zero_day_fixture + timedelta(days=1)).day} * *",
+            zero_day_fixture,
             None,
             [],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             "7 11-15 * * *",
-            day_with_zero_hour,
+            zero_day_fixture,
             None,
             [
-                day_with_zero_hour.replace(hour=11, minute=15),
-                day_with_zero_hour.replace(hour=12, minute=15),
-                day_with_zero_hour.replace(hour=13, minute=15),
-                day_with_zero_hour.replace(hour=14, minute=15),
-                day_with_zero_hour.replace(hour=15, minute=15),
+                zero_day_fixture.replace(hour=11, minute=15),
+                zero_day_fixture.replace(hour=12, minute=15),
+                zero_day_fixture.replace(hour=13, minute=15),
+                zero_day_fixture.replace(hour=14, minute=15),
+                zero_day_fixture.replace(hour=15, minute=15),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             "7 11-15 * * *",
-            day_with_zero_hour,
-            day_with_zero_hour + timedelta(hours=14),
+            zero_day_fixture,
+            zero_day_fixture + timedelta(hours=14),
             [
-                day_with_zero_hour.replace(hour=11, minute=15),
-                day_with_zero_hour.replace(hour=12, minute=15),
-                day_with_zero_hour.replace(hour=13, minute=15),
+                zero_day_fixture.replace(hour=11, minute=15),
+                zero_day_fixture.replace(hour=12, minute=15),
+                zero_day_fixture.replace(hour=13, minute=15),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             "*/50 * * * *",
-            day_with_zero_hour,
+            zero_day_fixture,
             None,
             [
-                day_with_zero_hour.replace(hour=8, minute=0),
-                day_with_zero_hour.replace(hour=9, minute=0),
-                day_with_zero_hour.replace(hour=10, minute=0),
-                day_with_zero_hour.replace(hour=11, minute=0),
-                day_with_zero_hour.replace(hour=12, minute=0),
-                day_with_zero_hour.replace(hour=13, minute=0),
-                day_with_zero_hour.replace(hour=14, minute=0),
-                day_with_zero_hour.replace(hour=15, minute=0),
-                day_with_zero_hour.replace(hour=16, minute=0),
-                day_with_zero_hour.replace(hour=17, minute=0),
-                day_with_zero_hour.replace(hour=18, minute=0),
-                day_with_zero_hour.replace(hour=19, minute=0),
-                day_with_zero_hour.replace(hour=20, minute=0),
-                day_with_zero_hour.replace(hour=21, minute=0),
-                day_with_zero_hour.replace(hour=22, minute=0),
+                zero_day_fixture.replace(hour=8, minute=0),
+                zero_day_fixture.replace(hour=9, minute=0),
+                zero_day_fixture.replace(hour=10, minute=0),
+                zero_day_fixture.replace(hour=11, minute=0),
+                zero_day_fixture.replace(hour=12, minute=0),
+                zero_day_fixture.replace(hour=13, minute=0),
+                zero_day_fixture.replace(hour=14, minute=0),
+                zero_day_fixture.replace(hour=15, minute=0),
+                zero_day_fixture.replace(hour=16, minute=0),
+                zero_day_fixture.replace(hour=17, minute=0),
+                zero_day_fixture.replace(hour=18, minute=0),
+                zero_day_fixture.replace(hour=19, minute=0),
+                zero_day_fixture.replace(hour=20, minute=0),
+                zero_day_fixture.replace(hour=21, minute=0),
+                zero_day_fixture.replace(hour=22, minute=0),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
-            f"*/50 * {day_with_zero_hour.day} {day_with_zero_hour.month} {day_with_zero_hour.weekday() + 1},5",
-            day_with_zero_hour,
+            f"*/50 * {zero_day_fixture.day} {zero_day_fixture.month} {zero_day_fixture.weekday() + 1},5",
+            zero_day_fixture,
             None,
             [
-                day_with_zero_hour.replace(hour=8, minute=0),
-                day_with_zero_hour.replace(hour=9, minute=0),
-                day_with_zero_hour.replace(hour=10, minute=0),
-                day_with_zero_hour.replace(hour=11, minute=0),
-                day_with_zero_hour.replace(hour=12, minute=0),
-                day_with_zero_hour.replace(hour=13, minute=0),
-                day_with_zero_hour.replace(hour=14, minute=0),
-                day_with_zero_hour.replace(hour=15, minute=0),
-                day_with_zero_hour.replace(hour=16, minute=0),
-                day_with_zero_hour.replace(hour=17, minute=0),
-                day_with_zero_hour.replace(hour=18, minute=0),
-                day_with_zero_hour.replace(hour=19, minute=0),
-                day_with_zero_hour.replace(hour=20, minute=0),
-                day_with_zero_hour.replace(hour=21, minute=0),
-                day_with_zero_hour.replace(hour=22, minute=0),
+                zero_day_fixture.replace(hour=8, minute=0),
+                zero_day_fixture.replace(hour=9, minute=0),
+                zero_day_fixture.replace(hour=10, minute=0),
+                zero_day_fixture.replace(hour=11, minute=0),
+                zero_day_fixture.replace(hour=12, minute=0),
+                zero_day_fixture.replace(hour=13, minute=0),
+                zero_day_fixture.replace(hour=14, minute=0),
+                zero_day_fixture.replace(hour=15, minute=0),
+                zero_day_fixture.replace(hour=16, minute=0),
+                zero_day_fixture.replace(hour=17, minute=0),
+                zero_day_fixture.replace(hour=18, minute=0),
+                zero_day_fixture.replace(hour=19, minute=0),
+                zero_day_fixture.replace(hour=20, minute=0),
+                zero_day_fixture.replace(hour=21, minute=0),
+                zero_day_fixture.replace(hour=22, minute=0),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
-            f"*/50 * {day_with_zero_hour.day}-15 {day_with_zero_hour.month}-10,11 {day_with_zero_hour.weekday() + 1},5",
-            day_with_zero_hour,
+            f"*/50 * {zero_day_fixture.day}-15 {zero_day_fixture.month}-10,11 {zero_day_fixture.weekday() + 1},5",
+            zero_day_fixture,
             None,
             [
-                day_with_zero_hour.replace(hour=8, minute=0),
-                day_with_zero_hour.replace(hour=9, minute=0),
-                day_with_zero_hour.replace(hour=10, minute=0),
-                day_with_zero_hour.replace(hour=11, minute=0),
-                day_with_zero_hour.replace(hour=12, minute=0),
-                day_with_zero_hour.replace(hour=13, minute=0),
-                day_with_zero_hour.replace(hour=14, minute=0),
-                day_with_zero_hour.replace(hour=15, minute=0),
-                day_with_zero_hour.replace(hour=16, minute=0),
-                day_with_zero_hour.replace(hour=17, minute=0),
-                day_with_zero_hour.replace(hour=18, minute=0),
-                day_with_zero_hour.replace(hour=19, minute=0),
-                day_with_zero_hour.replace(hour=20, minute=0),
-                day_with_zero_hour.replace(hour=21, minute=0),
-                day_with_zero_hour.replace(hour=22, minute=0),
+                zero_day_fixture.replace(hour=8, minute=0),
+                zero_day_fixture.replace(hour=9, minute=0),
+                zero_day_fixture.replace(hour=10, minute=0),
+                zero_day_fixture.replace(hour=11, minute=0),
+                zero_day_fixture.replace(hour=12, minute=0),
+                zero_day_fixture.replace(hour=13, minute=0),
+                zero_day_fixture.replace(hour=14, minute=0),
+                zero_day_fixture.replace(hour=15, minute=0),
+                zero_day_fixture.replace(hour=16, minute=0),
+                zero_day_fixture.replace(hour=17, minute=0),
+                zero_day_fixture.replace(hour=18, minute=0),
+                zero_day_fixture.replace(hour=19, minute=0),
+                zero_day_fixture.replace(hour=20, minute=0),
+                zero_day_fixture.replace(hour=21, minute=0),
+                zero_day_fixture.replace(hour=22, minute=0),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
-            f"*/50 * {day_with_zero_hour.day} {day_with_zero_hour.month} {day_with_zero_hour.weekday() + 1}",
-            day_with_zero_hour,
+            f"*/50 * {zero_day_fixture.day} {zero_day_fixture.month} {zero_day_fixture.weekday() + 1}",
+            zero_day_fixture,
             None,
             [
-                day_with_zero_hour.replace(hour=8, minute=0),
-                day_with_zero_hour.replace(hour=9, minute=0),
-                day_with_zero_hour.replace(hour=10, minute=0),
-                day_with_zero_hour.replace(hour=11, minute=0),
-                day_with_zero_hour.replace(hour=12, minute=0),
-                day_with_zero_hour.replace(hour=13, minute=0),
-                day_with_zero_hour.replace(hour=14, minute=0),
-                day_with_zero_hour.replace(hour=15, minute=0),
-                day_with_zero_hour.replace(hour=16, minute=0),
-                day_with_zero_hour.replace(hour=17, minute=0),
-                day_with_zero_hour.replace(hour=18, minute=0),
-                day_with_zero_hour.replace(hour=19, minute=0),
-                day_with_zero_hour.replace(hour=20, minute=0),
-                day_with_zero_hour.replace(hour=21, minute=0),
-                day_with_zero_hour.replace(hour=22, minute=0),
+                zero_day_fixture.replace(hour=8, minute=0),
+                zero_day_fixture.replace(hour=9, minute=0),
+                zero_day_fixture.replace(hour=10, minute=0),
+                zero_day_fixture.replace(hour=11, minute=0),
+                zero_day_fixture.replace(hour=12, minute=0),
+                zero_day_fixture.replace(hour=13, minute=0),
+                zero_day_fixture.replace(hour=14, minute=0),
+                zero_day_fixture.replace(hour=15, minute=0),
+                zero_day_fixture.replace(hour=16, minute=0),
+                zero_day_fixture.replace(hour=17, minute=0),
+                zero_day_fixture.replace(hour=18, minute=0),
+                zero_day_fixture.replace(hour=19, minute=0),
+                zero_day_fixture.replace(hour=20, minute=0),
+                zero_day_fixture.replace(hour=21, minute=0),
+                zero_day_fixture.replace(hour=22, minute=0),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             "0 10,20 * * *",
-            day_with_zero_hour,
+            zero_day_fixture,
             None,
             [
-                day_with_zero_hour.replace(hour=10, minute=0),
-                day_with_zero_hour.replace(hour=20, minute=0),
+                zero_day_fixture.replace(hour=10, minute=0),
+                zero_day_fixture.replace(hour=20, minute=0),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
         (
             "10 */8 * * *",
-            day_with_zero_hour,
+            zero_day_fixture,
             None,
             [
-                day_with_zero_hour.replace(hour=8, minute=15),
-                day_with_zero_hour.replace(hour=16, minute=15),
+                zero_day_fixture.replace(hour=8, minute=15),
+                zero_day_fixture.replace(hour=16, minute=15),
             ],
-            time(hour=8),
-            time(hour=22),
         ),
     ],
 )
@@ -314,8 +280,6 @@ def test_schedule(
     intake_start,
     intake_finish,
     expected_schedules_datetime,
-    schedule_lowest_bound,
-    schedule_highest_bound,
 ):
     """
     Тестирование алгоритма выдачи приема таблеток на день с 8:00 - до 22:00
@@ -324,49 +288,169 @@ def test_schedule(
     schedule_db = Schedule(
         medicine_name="", user_id=1, intake_period=intake_period, intake_finish=intake_finish, intake_start=intake_start
     )
-    schedule_repo = ScheduleRepo(AsyncMock(), schedule_lowest_bound, schedule_highest_bound)
+    schedule_repo = ScheduleRepo(AsyncMock(), time(hour=8), time(hour=22))
     schedule_and_scheduled_datetime = list(schedule_repo.schedule(schedule_db))
     assert len(schedule_and_scheduled_datetime) == len(expected_schedules_datetime)
     for scheduled_datetime, expected_datetime in zip(schedule_and_scheduled_datetime, expected_schedules_datetime):
         assert scheduled_datetime[1] == expected_datetime
 
 
+@freeze_time(zero_day_fixture)
 @pytest.mark.anyio
-@freeze_time(day_with_zero_hour)
 @pytest.mark.parametrize(
-    "schedules, start, stop, expected_schedules_datetime, schedule_lowest_bound,schedule_highest_bound",
+    "start_datetime, stop_datetime, expected",
     [
         (
+            zero_day_fixture - timedelta(days=3),
+            zero_day_fixture + timedelta(days=3),
             [
-                Schedule(
-                    medicine_name="",
-                    user_id=1,
-                    intake_period="0 12 * * *",
-                    intake_start=day_with_zero_hour,
-                    intake_finish=None,
-                ),
+                (0, zero_day_fixture + timedelta(hours=12)),
+                (0, zero_day_fixture + timedelta(days=1, hours=12)),
+                (0, zero_day_fixture + timedelta(days=2, hours=12)),
+                (1, zero_day_fixture - timedelta(days=1) + timedelta(hours=9, minutes=15)),
+                (1, zero_day_fixture - timedelta(days=1) + timedelta(hours=18, minutes=15)),
+                (1, zero_day_fixture + timedelta(hours=9, minutes=15)),
+                (1, zero_day_fixture + timedelta(hours=18, minutes=15)),
+                (1, zero_day_fixture + timedelta(days=1, hours=9, minutes=15)),
+                (1, zero_day_fixture + timedelta(days=1, hours=18, minutes=15)),
+                (1, zero_day_fixture + timedelta(days=2, hours=9, minutes=15)),
+                (1, zero_day_fixture + timedelta(days=2, hours=18, minutes=15)),
+                (2, zero_day_fixture + timedelta(days=2, hours=8)),
+                (2, zero_day_fixture + timedelta(days=2, hours=14)),
+                (2, zero_day_fixture + timedelta(days=2, hours=18)),
             ],
-            day_with_zero_hour - timedelta(days=3),
-            day_with_zero_hour + timedelta(days=3),
+        ),
+    ],
+)
+async def test_next_takings(start_datetime, stop_datetime, expected):
+    bind_contextvars(span_id=1)
+    mock_session = AsyncMock()
+    schedule_fixture = [
+        Schedule(
+            medicine_name="0",
+            user_id=1,
+            intake_period="0 12 * * *",
+            intake_start=zero_day_fixture,
+            intake_finish=zero_day_fixture + timedelta(days=5, hours=12),
+        ),
+        Schedule(
+            medicine_name="1",
+            user_id=1,
+            intake_period="15 9,18 * * *",
+            intake_start=zero_day_fixture - timedelta(days=1),
+            intake_finish=None,
+        ),
+        Schedule(
+            medicine_name="2",
+            user_id=1,
+            intake_period="0 8,14,18 */7 * *",
+            intake_start=zero_day_fixture,
+            intake_finish=zero_day_fixture + timedelta(days=30),
+        ),
+    ]
+    mock_session.exec.return_value = schedule_fixture
+    schedule_repo = ScheduleRepo(mock_session, time(hour=8), time(hour=22))
+
+    next_takings = [schedules async for schedules in schedule_repo.next_takings(0, start_datetime, stop=stop_datetime)]
+    assert len(next_takings) == len(expected)
+    for (schedule, scheduled_datetime), (schedule_idx, expected_datetime) in zip(next_takings, expected):
+        assert scheduled_datetime == expected_datetime
+        assert schedule == schedule_fixture[schedule_idx]
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "start_datetime, stop_datetime, expected",
+    [
+        (
+            zero_day_fixture + timedelta(days=1),
+            zero_day_fixture + timedelta(days=8),
             [
-                day_with_zero_hour.replace(hour=12),
-                day_with_zero_hour.replace(hour=12) + timedelta(days=1),
-                day_with_zero_hour.replace(hour=12) + timedelta(days=2),
+                zero_day_fixture + timedelta(days=1, hours=12),
+                zero_day_fixture + timedelta(days=2, hours=12),
+                zero_day_fixture + timedelta(days=3, hours=12),
+                zero_day_fixture + timedelta(days=4, hours=12),
+                zero_day_fixture + timedelta(days=5, hours=12),
             ],
-            time(hour=8),
-            time(hour=22),
+        ),
+    ],
+)
+async def test_next_takings_bound_values(start_datetime, stop_datetime, expected):
+    schedule_fixture = [
+        Schedule(
+            medicine_name="",
+            user_id=1,
+            intake_period="0 12 * * *",
+            intake_start=zero_day_fixture,
+            intake_finish=zero_day_fixture + timedelta(days=5, hours=12),
+        ),
+        Schedule(  # filtered out with schedule_lowest_bound
+            medicine_name="1",
+            user_id=1,
+            intake_period="0 6 * * *",
+            intake_start=zero_day_fixture + timedelta(days=1),
+            intake_finish=zero_day_fixture + timedelta(days=4),
+        ),
+    ]
+    bind_contextvars(span_id=1)
+    mock_session = AsyncMock()
+    mock_session.exec.return_value = schedule_fixture
+    schedule_repo = ScheduleRepo(mock_session, time(hour=8), time(hour=22))
+
+    next_takings = [schedules async for schedules in schedule_repo.next_takings(0, start_datetime, stop=stop_datetime)]
+    assert len(next_takings) == len(expected)
+    for (schedule, scheduled_datetime), expected_datetime in zip(next_takings, expected):
+        assert scheduled_datetime == expected_datetime
+        assert schedule == schedule_fixture[0]
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "start_datetime, stop_datetime, expected",
+    [
+        (
+            zero_day_fixture + timedelta(days=1),
+            zero_day_fixture + timedelta(days=8),
+            [
+                (0, zero_day_fixture + timedelta(days=1, hours=12)),
+                (0, zero_day_fixture + timedelta(days=2, hours=12)),
+                (0, zero_day_fixture + timedelta(days=3, hours=12)),
+                (0, zero_day_fixture + timedelta(days=4, hours=12)),
+                (0, zero_day_fixture + timedelta(days=5, hours=12)),
+                (1, zero_day_fixture + timedelta(days=1, hours=12)),
+                (1, zero_day_fixture + timedelta(days=2, hours=12)),
+                (1, zero_day_fixture + timedelta(days=3, hours=12)),
+                (1, zero_day_fixture + timedelta(days=4, hours=12)),
+                (1, zero_day_fixture + timedelta(days=5, hours=12)),
+            ],
         )
     ],
 )
-async def test_next_takings(
-    schedules, start, stop, expected_schedules_datetime, schedule_lowest_bound, schedule_highest_bound
-):
+async def test_next_takings_overlap_schedules(start_datetime, stop_datetime, expected):
+    schedule_fixture = [
+        Schedule(
+            medicine_name="0",
+            user_id=1,
+            intake_period="0 12 * * *",
+            intake_start=zero_day_fixture,
+            intake_finish=zero_day_fixture + timedelta(days=5, hours=12),
+        ),
+        Schedule(
+            medicine_name="1",
+            user_id=1,
+            intake_period="0 12 * * *",
+            intake_start=zero_day_fixture,
+            intake_finish=zero_day_fixture + timedelta(days=5, hours=12),
+        ),
+    ]
+
     bind_contextvars(span_id=1)
     mock_session = AsyncMock()
-    mock_session.exec.return_value = schedules
-    schedule_repo = ScheduleRepo(mock_session, schedule_lowest_bound, schedule_highest_bound)
+    mock_session.exec.return_value = schedule_fixture
+    schedule_repo = ScheduleRepo(mock_session, time(hour=8), time(hour=22))
 
-    schedule_and_scheduled_datetime = [schedules async for schedules in schedule_repo.next_takings(0, start, stop)]
-    assert len(schedule_and_scheduled_datetime) == len(expected_schedules_datetime)
-    for scheduled_datetime, expected_datetime in zip(schedule_and_scheduled_datetime, expected_schedules_datetime):
-        assert scheduled_datetime[1] == expected_datetime
+    next_takings = [schedules async for schedules in schedule_repo.next_takings(0, start_datetime, stop=stop_datetime)]
+    assert len(next_takings) == len(expected)
+    for (schedule, scheduled_datetime), (schedule_idx, expected_datetime) in zip(next_takings, expected):
+        assert scheduled_datetime == expected_datetime
+        assert schedule == schedule_fixture[schedule_idx]

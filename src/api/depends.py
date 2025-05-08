@@ -15,17 +15,17 @@ async def get_db_depends(request: Request):
         yield session
 
 
-GetDbDependency = Annotated[AsyncSession, Depends(get_db_depends)]
+SessionDependency = Annotated[AsyncSession, Depends(get_db_depends)]
 
 
-GetEnvSettingsDependency = Annotated[EnvSettings, Depends(get_env_settings)]
+EnvSettingsDependency = Annotated[EnvSettings, Depends(get_env_settings)]
 
 
-async def get_schedule_repo(session: GetDbDependency, settings: GetEnvSettingsDependency):
+async def get_schedule_repo(session: SessionDependency, settings: EnvSettingsDependency):
     return ScheduleRepo(session, settings.schedule_lowest_bound, settings.schedule_highest_bound)
 
 
-async def get_schedule_service(*, schedule_repo=Depends(get_schedule_repo), settings: GetEnvSettingsDependency):  # noqa: B008
+async def get_schedule_service(*, schedule_repo=Depends(get_schedule_repo), settings: EnvSettingsDependency):  # noqa: B008
     return ScheduleService(schedule_repo, settings.next_takings_period)
 
 
