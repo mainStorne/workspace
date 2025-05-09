@@ -10,6 +10,7 @@
 
 ## Пример запроса
 
+```bash
   curl -X 'POST' \
     '<http://localhost:8080/schedule>' \
     -H 'accept: application/json' \
@@ -21,6 +22,7 @@
     "intake_finish": "2025-05-09T15:24:42.430Z",
     "intake_start": "2025-05-08T18:53:08.620660Z"
   }'
+```
 
 ## Запуск
 
