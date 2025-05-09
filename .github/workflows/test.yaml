@@ -20,7 +20,7 @@ jobs:
           run: uv sync --locked --group linters
 
         - name: Lint
-          run: just lint
+          run: uv run just lint
 
   tests:
     name: run tests
