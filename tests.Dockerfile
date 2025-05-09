@@ -18,10 +18,11 @@ ENV UV_PROJECT_ENVIRONMENT=$VENV_PATH
 ENV UV_LINK_MODE=copy
 
 RUN --mount=from=uv,source=/uv,target=/bin/uv \
-    --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --no-install-project --no-editable
+  --mount=type=cache,target=/root/.cache/uv \
+  --mount=type=bind,source=uv.lock,target=uv.lock \
+  --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+  uv sync --group tests --no-install-project --no-editable
+
 
 FROM base AS runner
 COPY --from=builder ${VENV_PATH} ${VENV_PATH}
@@ -30,8 +31,10 @@ COPY aibolit_app aibolit_app
 COPY tests tests
 COPY alembic.sh .
 COPY alembic.ini .
+COPY pyproject.toml .
+COPY justfile .
 
 RUN chmod +x alembic.sh
 
 ENTRYPOINT [ "/app/alembic.sh" ]
-CMD pytest --cov=.
+CMD just tests

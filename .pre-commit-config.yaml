@@ -11,14 +11,14 @@ repos:
         language: system
         name: tests
         pass_filenames: false
-        entry: just tests
+        entry: uv run just tests
 
       - id: linters
         name: linters
         stages: [pre-commit]
         language: system
         pass_filenames: false
-        entry: just lint
+        entry: uv run just lint
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: "v5.0.0"

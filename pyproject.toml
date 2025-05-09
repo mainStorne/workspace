@@ -37,7 +37,9 @@ dependencies = [
 
 
 [dependency-groups]
-dev = []
+dev = [
+    "rust-just>=1.40.0",
+]
 linters = ["ruff>=0.11.8"]
 tests = [
   "freezegun>=1.5.1",

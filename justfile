@@ -45,7 +45,7 @@ ruff:
 # Run tests using pytest
 [group('testing')]
 tests:
-    uv run pytest .
+    pytest . --cov=.
 
 # --- Code generation ---
 
