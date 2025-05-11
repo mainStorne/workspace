@@ -4,10 +4,10 @@ from aibolit_app.api.depends import EnvSettingsDependency, ScheduleServiceDepend
 from aibolit_app.api.schemas.schedules import ScheduleCard, ScheduleCreate, ScheduleRead, TakingsRead
 from aibolit_app.services.schedules_service import ScheduleExpiredException, ScheduleNotFoundException
 
-r = APIRouter(tags=['Schedule'])
+schedules_router = APIRouter(tags=['Schedule'])
 
 
-@r.get('/schedules')
+@schedules_router.get('/schedules')
 async def schedules(user_id: int, schedule_repository: ScheduleServiceDependency) -> list[ScheduleRead]:
     """Возвращает данные о выбранном расписании с рассчитанным
     графиком приёмов на день
@@ -18,7 +18,7 @@ async def schedules(user_id: int, schedule_repository: ScheduleServiceDependency
     return response
 
 
-@r.post('/schedule')
+@schedules_router.post('/schedule')
 async def create(
     schedule_repository: ScheduleServiceDependency, schedule: ScheduleCreate, settings: EnvSettingsDependency
 ) -> ScheduleRead:
@@ -30,7 +30,7 @@ async def create(
     return {'id': schedule_id}
 
 
-@r.get(
+@schedules_router.get(
     '/schedule',
     responses={404: {'detail': 'Not found'}, 400: {'detail': 'Расписание истекло!'}},
 )
@@ -56,7 +56,7 @@ async def schedule(
     return response
 
 
-@r.get('/next_takings')
+@schedules_router.get('/next_takings')
 async def next_takings(schedule_repository: ScheduleServiceDependency, user_id: int) -> list[TakingsRead]:
     """Возвращает данные о таблетках, которые необходимо принять
     в ближайшие период (например, в ближайший час). Период

@@ -3,7 +3,7 @@ import re
 
 import structlog
 
-from aibolit_app.settings import AppEnvironment
+from aibolit_app.settings import AppEnvironments
 
 USER_ID_PATTERN = re.compile(r'user_id=(\d+)')
 
@@ -16,14 +16,14 @@ def filter_user_id_from_query_parameter(logger, method_name: str, event_dict: di
     return event_dict
 
 
-def setup_logging(app_environment: AppEnvironment) -> None:
+def setup_logging(app_environment: AppEnvironments) -> None:
     shared_processors = [
         structlog.processors.add_log_level,
         structlog.processors.StackInfoRenderer(),
         structlog.dev.set_exc_info,
         structlog.processors.TimeStamper(fmt=r'%Y-%m-%d %H:%M:%S', utc=True),
     ]
-    if app_environment is AppEnvironment.PROD:
+    if app_environment is AppEnvironments.PROD:
         shared_processors.append(structlog.processors.JSONRenderer())
     else:
         shared_processors.append(structlog.dev.ConsoleRenderer())

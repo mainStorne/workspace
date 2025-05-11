@@ -36,7 +36,6 @@ jobs:
           echo "POSTGRES_PASSWORD=test" >> .env
           echo "POSTGRES_PORT=5432" >> .env
           echo "NEXT_TAKINGS_PERIOD=P3D" >> .env
-          echo "APP_ENVIRONMENT=PROD" >> .env
 
       - name: Run Docker Compose
         run: docker compose -f docker-compose.tests.yaml up --exit-code-from tests
