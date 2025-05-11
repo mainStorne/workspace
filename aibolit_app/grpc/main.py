@@ -3,7 +3,7 @@ from typing import Callable
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from aibolit_app.grpc.server import Server
-from aibolit_app.grpc.servicers.schedule_servicer import ScheduleServiceServicer
+from aibolit_app.grpc.servicers.schedules_servicer import ScheduleServiceServicer
 from aibolit_app.settings import EnvSettings
 
 
