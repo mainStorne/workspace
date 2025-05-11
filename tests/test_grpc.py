@@ -149,7 +149,7 @@ async def test_next_takings(stub, session, next_takings_period, expected, settin
         )
 
     monkeypatch.setattr(
-        'aibolit_app.grpc.servicers.schedule_servicer.ScheduleServiceServicer.schedule_service_dependency',
+        'aibolit_app.grpc.servicers.schedules_servicer.ScheduleServiceServicer.schedule_service_dependency',
         mock_schedule_service_dependency,
     )
 
