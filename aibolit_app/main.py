@@ -10,7 +10,7 @@ from structlog import get_logger
 
 from aibolit_app.api.middlewares.logging_middleware import LoggingMiddleware
 from aibolit_app.api.transports.views.schedules import views
-from aibolit_app.grpc.server import Server
+from aibolit_app.grpc.main import make_grpc_server
 from aibolit_app.logging import setup_logging
 from aibolit_app.settings import get_env_settings
 
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     await log.ainfo('API is starting')
     db_engine = create_async_engine(settings.database.sqlalchemy_url)
     db_sessionmaker = async_sessionmaker(db_engine, expire_on_commit=False, class_=AsyncSession)
-    server = Server(50051, db_sessionmaker, db_engine, settings)
+    server = make_grpc_server(50051, db_sessionmaker, settings)
     await server.start()
     asyncio.create_task(server.wait_for_termination())  # noqa: RUF006
     yield {'db_engine': db_engine, 'db_sessionmaker': db_sessionmaker, 'settings': settings}

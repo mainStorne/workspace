@@ -15,7 +15,7 @@ from aibolit_app.grpc.generated.schedule_pb2 import (
     MakeScheduleRequest,
 )
 from aibolit_app.grpc.generated.schedule_pb2_grpc import ScheduleServiceStub
-from aibolit_app.grpc.server import Server
+from aibolit_app.grpc.main import make_grpc_server
 from aibolit_app.integrations.schedules_repo import ScheduleRepo
 from aibolit_app.services.schedules_service import ScheduleService
 from tests.utils import zero_day_fixture
@@ -29,7 +29,7 @@ async def server(engine, settings, session):
     async def mock_session_maker(*args, **kwargs):
         yield session
 
-    s = Server(port=50051, db_engine=engine, settings=settings, session_maker=mock_session_maker)
+    s = make_grpc_server(50051, settings=settings, db_session_maker=mock_session_maker)
     await s.start()
     yield
     await s.stop()
