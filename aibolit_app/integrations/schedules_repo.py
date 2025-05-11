@@ -83,10 +83,23 @@ class ScheduleRepo(IScheduleRepo):
             microsecond=self._schedule_highest_bound.microsecond,
             tzinfo=timezone.utc,
         )
-        stop = schedule_in.intake_finish if schedule_in.intake_finish and schedule_in.intake_finish < stop else stop
+        schedule_stop = (
+            schedule_in.intake_finish if schedule_in.intake_finish and schedule_in.intake_finish < stop else stop
+        )
+        start = datetime(
+            year=today.year,
+            month=today.month,
+            day=today.day,
+            hour=self._schedule_lowest_bound.hour,
+            minute=self._schedule_lowest_bound.minute,
+            second=self._schedule_lowest_bound.second,
+            microsecond=self._schedule_lowest_bound.microsecond,
+            tzinfo=timezone.utc,
+        )
+        schedule_start = max(start, schedule_in.intake_start)
 
         for scheduled_datetime in self._crontab_range(
-            schedule_in.intake_start, stop, CronTab(schedule_in.intake_period)
+            schedule_start, schedule_stop, CronTab(schedule_in.intake_period)
         ):
             yield schedule_in, scheduled_datetime
 

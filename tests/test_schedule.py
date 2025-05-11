@@ -43,6 +43,12 @@ def test_finish_time_greater_then_start_time():
     [
         (
             '15 20 * * *',
+            zero_day_fixture - timedelta(days=10),
+            None,
+            [zero_day_fixture.replace(hour=20, minute=15)],
+        ),
+        (
+            '15 20 * * *',
             zero_day_fixture,
             None,
             [zero_day_fixture.replace(hour=20, minute=15)],
@@ -304,6 +310,9 @@ def test_schedule(
             zero_day_fixture - timedelta(days=3),
             zero_day_fixture + timedelta(days=3),
             [
+                (0, zero_day_fixture - timedelta(days=3) + timedelta(hours=12)),
+                (0, zero_day_fixture - timedelta(days=2) + timedelta(hours=12)),
+                (0, zero_day_fixture - timedelta(days=1) + timedelta(hours=12)),
                 (0, zero_day_fixture + timedelta(hours=12)),
                 (0, zero_day_fixture + timedelta(days=1, hours=12)),
                 (0, zero_day_fixture + timedelta(days=2, hours=12)),
@@ -330,7 +339,7 @@ async def test_next_takings(start_datetime, stop_datetime, expected):
             medicine_name='0',
             user_id=1,
             intake_period='0 12 * * *',
-            intake_start=zero_day_fixture,
+            intake_start=zero_day_fixture - timedelta(days=10),
             intake_finish=zero_day_fixture + timedelta(days=5, hours=12),
         ),
         Schedule(
